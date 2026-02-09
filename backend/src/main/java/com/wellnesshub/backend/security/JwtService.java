@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -31,14 +32,24 @@ public class JwtService {
     }
 
     public String generateAccessToken(UserEntity user) {
-        return generateToken(user, accessTokenValidityMs, Map.of("role", user.getRole().name()));
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", user.getRole().name());
+
+        return generateToken(user, accessTokenValidityMs, claims);
     }
 
     public String generateRefreshToken(UserEntity user) {
-        return generateToken(user, refreshTokenValidityMs, Map.of("type", "refresh"));
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("type", "refresh");
+
+        return generateToken(user, refreshTokenValidityMs, claims);
     }
 
-    private String generateToken(UserEntity user, long validityMs, Map<String, Object> extraClaims) {
+    private String generateToken(
+            UserEntity user,
+            long validityMs,
+            Map<String, Object> extraClaims
+    ) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + validityMs);
 
@@ -61,7 +72,7 @@ public class JwtService {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+
         return resolver.apply(claims);
     }
 }
-

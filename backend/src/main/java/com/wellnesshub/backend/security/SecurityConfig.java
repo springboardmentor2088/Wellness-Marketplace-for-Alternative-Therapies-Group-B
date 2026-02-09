@@ -20,7 +20,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
-import java.util.List;
 
 @Configuration
 @EnableMethodSecurity
@@ -37,16 +36,16 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeRequests(auth -> auth
-                        .antMatchers("/api/auth/**").permitAll()
-                        .antMatchers("/ws/**").permitAll()
-                        .antMatchers(HttpMethod.GET, "/actuator/health").permitAll()
-                        .anyRequest().authenticated()
-                )
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+            .csrf(csrf -> csrf.disable()) // ✅ Important! Disables CSRF
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeRequests(auth -> auth
+                .antMatchers("/api/auth/**").permitAll()  // 🔓 Open login & register
+                .antMatchers("/ws/**").permitAll()
+                .antMatchers(HttpMethod.GET, "/actuator/health").permitAll()
+                .anyRequest().authenticated() // 🔒 Everything else needs auth
+            )
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -54,11 +53,11 @@ public class SecurityConfig {
     @Bean
     public UserDetailsService userDetailsService() {
         return username -> userRepository.findByEmail(username)
-                .map(u -> User.withUsername(u.getEmail())
-                        .password(u.getPasswordHash())
-                        .roles(u.getRole().name())
-                        .build())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+            .map(u -> User.withUsername(u.getEmail())
+                .password(u.getPasswordHash())
+                .roles(u.getRole().name())
+                .build())
+            .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
     @Bean
@@ -67,7 +66,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration)
+            throws Exception {
         return configuration.getAuthenticationManager();
     }
 
@@ -84,4 +84,3 @@ public class SecurityConfig {
         return source;
     }
 }
-
