@@ -1,6 +1,16 @@
+import { useEffect, useState } from 'react'
 import { DashboardLayout } from '../components/DashboardLayout'
+import { api } from '../api'
 
 export function UserDashboard() {
+  const [profile, setProfile] = useState<any>(null)
+
+  useEffect(() => {
+    api.getProfile().then(setProfile).catch(console.error)
+  }, [])
+
+  if (!profile) return <div>Loading...</div>
+
   return (
     <DashboardLayout
       sidebarItems={[

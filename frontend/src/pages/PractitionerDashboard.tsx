@@ -1,6 +1,16 @@
+import { useEffect, useState } from 'react'
 import { DashboardLayout } from '../components/DashboardLayout'
+import { api } from '../api'
 
 export function PractitionerDashboard() {
+  const [profile, setProfile] = useState<any>(null)
+
+  useEffect(() => {
+    api.getProfile().then(setProfile).catch(console.error)
+  }, [])
+
+  if (!profile) return <div>Loading...</div>
+
   return (
     <DashboardLayout
       sidebarItems={[
@@ -29,13 +39,15 @@ export function PractitionerDashboard() {
               <p className="text-xs font-semibold uppercase tracking-[0.15em] text-amber-700">
                 Verification Status
               </p>
-              <p className="mt-2 text-sm font-semibold text-slate-900">Pending verification</p>
+              <p className="mt-2 text-sm font-semibold text-slate-900">{profile.verificationStatus || 'Pending'}</p>
               <p className="mt-1 text-xs text-slate-600">
-                Complete your profile to gain full access to the marketplace.
+                {profile.verificationStatus === 'APPROVED' ? 'Your account is verified.' : 'Complete your profile to gain full access to the marketplace.'}
               </p>
-              <button className="mt-3 rounded-full border border-amber-600/60 px-3 py-1 text-[11px] font-semibold text-amber-800">
-                Complete profile
-              </button>
+              {profile.verificationStatus !== 'APPROVED' && (
+                <button className="mt-3 rounded-full border border-amber-600/60 px-3 py-1 text-[11px] font-semibold text-amber-800">
+                  Complete profile
+                </button>
+              )}
             </div>
           </div>
 

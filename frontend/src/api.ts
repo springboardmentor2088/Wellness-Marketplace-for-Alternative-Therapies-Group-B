@@ -11,6 +11,8 @@ export interface RegisterRequest {
   password: string;
   role: string;
   specialization?: string;
+  city?: string;
+  country?: string;
 }
 
 export interface AuthResponse {
@@ -43,6 +45,10 @@ export interface DashboardData {
 }
 
 class ApiService {
+  get baseURL() {
+    return API_BASE;
+  }
+
   private getAuthHeaders(): Record<string, string> {
     const token = localStorage.getItem('accessToken');
     return token ? { Authorization: `Bearer ${token}` } : {};
@@ -82,6 +88,42 @@ class ApiService {
     });
     if (!response.ok) throw new Error('Failed to fetch dashboard');
     return response.json();
+  }
+
+  async uploadDegree(file: File): Promise<string> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await fetch(`${API_BASE}/user/uploadDegree`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: formData,
+    });
+    if (!response.ok) throw new Error('Failed to upload degree');
+    return response.text();
+  }
+
+  async getPendingPractitioners(): Promise<any[]> {
+    const response = await fetch(`${API_BASE}/user/practitioners`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch pending practitioners');
+    return response.json();
+  }
+
+  async verifyPractitioner(id: number): Promise<void> {
+    const response = await fetch(`${API_BASE}/user/admin/verify/${id}`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to verify practitioner');
+  }
+
+  async rejectPractitioner(id: number): Promise<void> {
+    const response = await fetch(`${API_BASE}/user/admin/reject/${id}`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to reject practitioner');
   }
 }
 

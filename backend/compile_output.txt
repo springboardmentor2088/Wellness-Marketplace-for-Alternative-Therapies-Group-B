@@ -1,0 +1,59 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------------------< com.wellnesshub:backend >-----------------------
+[INFO] Building wellness-backend 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.2.0:resources (default-resources) @ backend ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Using 'UTF-8' encoding to copy filtered properties files.
+[INFO] Copying 1 resource
+[INFO] Copying 0 resource
+[INFO] 
+[INFO] --- compiler:3.10.1:compile (default-compile) @ backend ---
+[INFO] Changes detected - recompiling the module!
+[INFO] Compiling 11 source files to c:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\target\classes
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /c:/Career/Internship/Virtual Internship/Infosys/Project/Image Wellness Marketplace for Alternative Therapies/backend/src/main/java/com/wellnesshub/backend/auth/AuthDtos.java:[3,36] cannot find symbol
+  symbol:   class UserRole
+  location: package com.wellnesshub.backend.user
+[ERROR] /c:/Career/Internship/Virtual Internship/Infosys/Project/Image Wellness Marketplace for Alternative Therapies/backend/src/main/java/com/wellnesshub/backend/auth/AuthDtos.java:[18,17] cannot find symbol
+  symbol:   class UserRole
+  location: class com.wellnesshub.backend.auth.AuthDtos.RegisterRequest
+[ERROR] /c:/Career/Internship/Virtual Internship/Infosys/Project/Image Wellness Marketplace for Alternative Therapies/backend/src/main/java/com/wellnesshub/backend/auth/AuthDtos.java:[31,16] cannot find symbol
+  symbol:   class UserRole
+  location: class com.wellnesshub.backend.auth.AuthDtos.RegisterRequest
+[ERROR] /c:/Career/Internship/Virtual Internship/Infosys/Project/Image Wellness Marketplace for Alternative Therapies/backend/src/main/java/com/wellnesshub/backend/auth/AuthDtos.java:[32,29] cannot find symbol
+  symbol:   class UserRole
+  location: class com.wellnesshub.backend.auth.AuthDtos.RegisterRequest
+[INFO] 4 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  2.487 s
+[INFO] Finished at: 2026-02-13T16:54:02+05:30
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.10.1:compile (default-compile) on project backend: Compilation failure: Compilation failure: 
+[ERROR] /c:/Career/Internship/Virtual Internship/Infosys/Project/Image Wellness Marketplace for Alternative Therapies/backend/src/main/java/com/wellnesshub/backend/auth/AuthDtos.java:[3,36] cannot find symbol
+[ERROR]   symbol:   class UserRole
+[ERROR]   location: package com.wellnesshub.backend.user
+[ERROR] /c:/Career/Internship/Virtual Internship/Infosys/Project/Image Wellness Marketplace for Alternative Therapies/backend/src/main/java/com/wellnesshub/backend/auth/AuthDtos.java:[18,17] cannot find symbol
+[ERROR]   symbol:   class UserRole
+[ERROR]   location: class com.wellnesshub.backend.auth.AuthDtos.RegisterRequest
+[ERROR] /c:/Career/Internship/Virtual Internship/Infosys/Project/Image Wellness Marketplace for Alternative Therapies/backend/src/main/java/com/wellnesshub/backend/auth/AuthDtos.java:[31,16] cannot find symbol
+[ERROR]   symbol:   class UserRole
+[ERROR]   location: class com.wellnesshub.backend.auth.AuthDtos.RegisterRequest
+[ERROR] /c:/Career/Internship/Virtual Internship/Infosys/Project/Image Wellness Marketplace for Alternative Therapies/backend/src/main/java/com/wellnesshub/backend/auth/AuthDtos.java:[32,29] cannot find symbol
+[ERROR]   symbol:   class UserRole
+[ERROR]   location: class com.wellnesshub.backend.auth.AuthDtos.RegisterRequest
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

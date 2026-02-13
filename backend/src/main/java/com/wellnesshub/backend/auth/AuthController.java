@@ -1,17 +1,14 @@
 package com.wellnesshub.backend.auth;
 
-import com.wellnesshub.backend.auth.AuthDtos.AuthResponse;
-import com.wellnesshub.backend.auth.AuthDtos.LoginRequest;
-import com.wellnesshub.backend.auth.AuthDtos.RegisterRequest;
 import com.wellnesshub.backend.security.JwtService;
 import com.wellnesshub.backend.user.UserEntity;
 import com.wellnesshub.backend.user.UserRepository;
-import javax.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -19,54 +16,100 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final BCryptPasswordEncoder passwordEncoder;
 
     public AuthController(
             UserRepository userRepository,
-            PasswordEncoder passwordEncoder,
-            AuthenticationManager authenticationManager,
-            JwtService jwtService
+            JwtService jwtService,
+            BCryptPasswordEncoder passwordEncoder
     ) {
         this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            return ResponseEntity.badRequest().build();
+    public ResponseEntity<Map<String, Object>> register(@RequestBody Map<String, String> request) {
+
+        String email = request.get("email");
+        String password = request.get("password");
+        String name = request.get("name");
+        String role = request.get("role");
+
+        if (email == null || password == null || name == null || role == null) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "Missing required fields");
+            return ResponseEntity.badRequest().body(error);
+        }
+
+        if (userRepository.findByEmail(email).isPresent()) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "Email already exists");
+            return ResponseEntity.badRequest().body(error);
         }
 
         UserEntity user = new UserEntity();
-        user.setFullName(request.getFullName());
-        user.setEmail(request.getEmail());
-        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        user.setRole(request.getRole());
-        if (request.getRole() == com.wellnesshub.backend.user.UserRole.PRACTITIONER) {
-            user.setSpecialization(request.getSpecialization());
-            user.setVerificationStatus("PENDING");
-        }
+        user.setName(name);
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setRole(role);
+
         userRepository.save(user);
 
-        String access = jwtService.generateAccessToken(user);
-        String refresh = jwtService.generateRefreshToken(user);
-        return ResponseEntity.ok(new AuthResponse(access, refresh, user.getRole().name()));
+        // ✅ Wrap claims in a Map
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("email", email);
+        claims.put("role", role);
+
+        String token = jwtService.generateToken(claims, email);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "Registration successful");
+        response.put("token", token);
+        response.put("role", role);
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword());
-        authenticationManager.authenticate(authToken);
+    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> request) {
 
-        UserEntity user = userRepository.findByEmail(request.getEmail()).orElseThrow(RuntimeException::new);
-        String access = jwtService.generateAccessToken(user);
-        String refresh = jwtService.generateRefreshToken(user);
+        String email = request.get("email");
+        String password = request.get("password");
 
-        return ResponseEntity.ok(new AuthResponse(access, refresh, user.getRole().name()));
+        if (email == null || password == null) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "Missing email or password");
+            return ResponseEntity.badRequest().body(error);
+        }
+
+        UserEntity user = userRepository.findByEmail(email).orElse(null);
+
+        if (user == null || !passwordEncoder.matches(password, user.getPassword())) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "Invalid credentials");
+            return ResponseEntity.badRequest().body(error);
+        }
+
+        // ✅ Wrap claims in a Map
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("email", user.getEmail());
+        claims.put("role", user.getRole());
+
+        String token = jwtService.generateToken(claims, user.getEmail());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "Login successful");
+        response.put("token", token);
+        response.put("role", user.getRole());
+
+        return ResponseEntity.ok(response);
     }
 }
-
