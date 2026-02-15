@@ -1,18 +1,17 @@
-C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellnesshub\backend\auth\AuthController.java
-C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellnesshub\backend\auth\AuthenticationRequest.java
-C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellnesshub\backend\auth\AuthenticationResponse.java
-C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellnesshub\backend\auth\CorsConfig.java
-C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellnesshub\backend\auth\LoginRequest.java
-C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellnesshub\backend\auth\RegisterRequest.java
-C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellnesshub\backend\auth\SecurityConfig.java
-C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellnesshub\backend\practitioner\PractitionerProfileEntity.java
-C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellnesshub\backend\practitioner\PractitionerProfileRepository.java
-C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellnesshub\backend\realtime\WebSocketConfig.java
-C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellnesshub\backend\security\JwtAuthenticationFilter.java
-C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellnesshub\backend\security\JwtService.java
-C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellnesshub\backend\user\CustomUserDetailsService.java
-C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellnesshub\backend\user\UserController.java
-C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellnesshub\backend\user\UserEntity.java
-C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellnesshub\backend\user\UserRepository.java
-C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellnesshub\backend\user\UserRole.java
-C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellnesshub\backend\WellnessBackendApplication.java
+C:\Users\Poojitha\Downloads\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellnesshub\backend\auth\AuthController.java
+C:\Users\Poojitha\Downloads\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellnesshub\backend\auth\AuthenticationRequest.java
+C:\Users\Poojitha\Downloads\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellnesshub\backend\auth\AuthenticationResponse.java
+C:\Users\Poojitha\Downloads\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellnesshub\backend\auth\LoginRequest.java
+C:\Users\Poojitha\Downloads\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellnesshub\backend\auth\RegisterRequest.java
+C:\Users\Poojitha\Downloads\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellnesshub\backend\auth\SecurityConfig.java
+C:\Users\Poojitha\Downloads\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellnesshub\backend\practitioner\PractitionerProfileEntity.java
+C:\Users\Poojitha\Downloads\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellnesshub\backend\practitioner\PractitionerProfileRepository.java
+C:\Users\Poojitha\Downloads\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellnesshub\backend\realtime\WebSocketConfig.java
+C:\Users\Poojitha\Downloads\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellnesshub\backend\security\JwtAuthenticationFilter.java
+C:\Users\Poojitha\Downloads\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellnesshub\backend\security\JwtService.java
+C:\Users\Poojitha\Downloads\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellnesshub\backend\user\CustomUserDetailsService.java
+C:\Users\Poojitha\Downloads\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellnesshub\backend\user\UserController.java
+C:\Users\Poojitha\Downloads\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellnesshub\backend\user\UserEntity.java
+C:\Users\Poojitha\Downloads\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellnesshub\backend\user\UserRepository.java
+C:\Users\Poojitha\Downloads\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellnesshub\backend\user\UserRole.java
+C:\Users\Poojitha\Downloads\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellnesshub\backend\WellnessBackendApplication.java

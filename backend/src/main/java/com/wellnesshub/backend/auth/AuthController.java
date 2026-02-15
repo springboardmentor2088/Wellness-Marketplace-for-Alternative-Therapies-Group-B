@@ -6,7 +6,10 @@ import com.wellnesshub.backend.user.UserRepository;
 import com.wellnesshub.backend.practitioner.PractitionerProfileEntity;
 import com.wellnesshub.backend.practitioner.PractitionerProfileRepository;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -20,13 +23,16 @@ public class AuthController {
     private final UserRepository userRepository;
     private final PractitionerProfileRepository practitionerProfileRepository;
     private final JwtService jwtService;
-    private final BCryptPasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
+
+
 
     public AuthController(
             UserRepository userRepository,
             PractitionerProfileRepository practitionerProfileRepository,
             JwtService jwtService,
-            BCryptPasswordEncoder passwordEncoder) {
+             PasswordEncoder passwordEncoder
+) {
         this.userRepository = userRepository;
         this.practitionerProfileRepository = practitionerProfileRepository;
         this.jwtService = jwtService;

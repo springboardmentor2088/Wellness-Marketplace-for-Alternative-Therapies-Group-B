@@ -1,5 +1,4 @@
 com\wellnesshub\backend\security\JwtService.class
-com\wellnesshub\backend\auth\CorsConfig.class
 com\wellnesshub\backend\user\UserController.class
 com\wellnesshub\backend\realtime\WebSocketConfig.class
 com\wellnesshub\backend\user\UserRepository.class

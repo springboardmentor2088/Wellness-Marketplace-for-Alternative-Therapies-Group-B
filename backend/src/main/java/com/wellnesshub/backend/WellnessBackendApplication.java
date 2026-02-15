@@ -12,8 +12,5 @@ public class WellnessBackendApplication {
         SpringApplication.run(WellnessBackendApplication.class, args);
     }
 
-    @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+   
 }
