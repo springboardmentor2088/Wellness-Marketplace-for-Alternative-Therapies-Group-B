@@ -36,13 +36,13 @@ export function DegreeUploadPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file) return;
+    if (!file || !userProfile) return;
     setLoading(true);
     try {
-      await api.uploadDegree(file);
+      await api.uploadDegree(file, userProfile.id); // pass userId
       navigate('/dashboard/practitioner');
-    } catch {
-      setError('Upload failed. Please try again.');
+    } catch (err: any) {
+      setError(err.message || 'Upload failed. Please try again.');
     } finally {
       setLoading(false);
     }

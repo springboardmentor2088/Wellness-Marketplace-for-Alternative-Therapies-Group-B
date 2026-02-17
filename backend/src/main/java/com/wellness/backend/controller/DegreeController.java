@@ -14,7 +14,6 @@ import java.util.Collections;
 
 @RestController
 @RequestMapping("/api/user")
-@CrossOrigin(origins = "*")
 public class DegreeController {
 
     @Autowired

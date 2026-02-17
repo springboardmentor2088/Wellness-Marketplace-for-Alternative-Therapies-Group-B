@@ -6,7 +6,7 @@ export interface LoginRequest {
 }
 
 export interface RegisterRequest {
-  name: string;       // must match backend 'name'
+  name: string;
   email: string;
   password: string;
   role: 'CLIENT' | 'PROVIDER' | 'ADMIN';
@@ -32,13 +32,7 @@ export interface Profile {
   verificationStatus?: string;
 }
 
-export interface DashboardData {
-  profile: Profile;
-  sessionHistory?: any[];
-  productOrders?: any[];
-}
-
-class ApiService {
+export class ApiService {
   get baseURL() {
     return API_BASE;
   }
@@ -80,24 +74,37 @@ class ApiService {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
+      credentials: 'include', // include cookies
     });
 
     if (!response.ok) throw new Error('Failed to fetch profile');
     return response.json();
   }
 
-  async uploadDegree(file: File): Promise<string> {
+  // --- FIXED uploadDegree ---
+  async uploadDegree(file: File, userId: number): Promise<any> {
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('userId', userId.toString());
+
+    const token = localStorage.getItem('accessToken');
 
     const response = await fetch(`${API_BASE}/user/uploadDegree`, {
       method: 'POST',
-      headers: this.getAuthHeaders(),
+      headers: {
+        Authorization: token ? `Bearer ${token}` : '',
+        // Do NOT set Content-Type; browser sets boundary automatically
+      },
       body: formData,
+      credentials: 'include', // important for CORS with credentials
     });
 
-    if (!response.ok) throw new Error('Failed to upload degree');
-    return response.text();
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(text || 'Failed to upload degree');
+    }
+
+    return response.json(); // { message: 'Degree uploaded' }
   }
 }
 
