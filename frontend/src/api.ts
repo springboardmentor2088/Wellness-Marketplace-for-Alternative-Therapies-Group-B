@@ -6,10 +6,10 @@ export interface LoginRequest {
 }
 
 export interface RegisterRequest {
-  fullName: string;
+  name: string;       // must match backend 'name'
   email: string;
   password: string;
-  role: string;
+  role: 'CLIENT' | 'PROVIDER' | 'ADMIN';
   specialization?: string;
   city?: string;
   country?: string;
@@ -17,13 +17,13 @@ export interface RegisterRequest {
 
 export interface AuthResponse {
   accessToken: string;
-  refreshToken: string;
+  refreshToken?: string;
   role: string;
 }
 
 export interface Profile {
   id: number;
-  fullName: string;
+  name: string;
   email: string;
   role: string;
   city?: string;
@@ -33,15 +33,9 @@ export interface Profile {
 }
 
 export interface DashboardData {
-  profile: {
-    fullName: string;
-    email: string;
-    role: string;
-  };
+  profile: Profile;
   sessionHistory?: any[];
   productOrders?: any[];
-  specialization?: string;
-  verificationStatus?: string;
 }
 
 class ApiService {
@@ -70,7 +64,10 @@ class ApiService {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error('Registration failed');
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(text || 'Registration failed');
+    }
     return response.json();
   }
 
