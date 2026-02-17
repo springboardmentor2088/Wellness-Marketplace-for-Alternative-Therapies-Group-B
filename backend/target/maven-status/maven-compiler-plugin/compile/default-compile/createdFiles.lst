@@ -17,6 +17,7 @@ com\wellness\backend\config\WebSocketConfig.class
 com\wellness\backend\dto\RegisterRequest.class
 com\wellness\backend\dto\AuthenticationRequest$AuthenticationRequestBuilder.class
 com\wellness\backend\service\JwtService.class
+com\wellness\backend\service\UserService.class
 com\wellness\backend\config\CorsConfig.class
 com\wellness\backend\config\WebConfig.class
 com\wellness\backend\model\UserEntity.class

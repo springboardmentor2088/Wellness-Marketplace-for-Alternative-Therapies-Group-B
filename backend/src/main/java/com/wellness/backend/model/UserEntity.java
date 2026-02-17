@@ -17,7 +17,7 @@ public class UserEntity {
     private Long id;
 
     @Column(nullable = false)
-    private String name;
+    private String name;  // Use getName() instead of getFullName()
 
     @Column(nullable = false, unique = true)
     private String email;
@@ -37,4 +37,9 @@ public class UserEntity {
 
     @Column(name = "verification_status")
     private String verificationStatus = "PENDING";
+
+    // Optional helper methods (if needed for UserService)
+    public boolean isVerified() {
+        return "VERIFIED".equalsIgnoreCase(this.verificationStatus);
+    }
 }
