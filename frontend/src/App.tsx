@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, Navigate } from 'react-router-dom'
 import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
@@ -11,13 +11,21 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-brand-50 to-emerald-50">
       <Routes>
+        {/* Landing & Auth */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+
+        {/* Degree Upload */}
         <Route path="/upload-degree" element={<DegreeUploadPage />} />
+
+        {/* Dashboards */}
         <Route path="/dashboard/user" element={<UserDashboard />} />
         <Route path="/dashboard/practitioner" element={<PractitionerDashboard />} />
         <Route path="/dashboard/admin" element={<AdminDashboard />} />
+
+        {/* Redirect unknown routes to landing page */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
   )

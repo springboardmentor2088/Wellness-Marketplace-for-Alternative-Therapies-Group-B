@@ -57,9 +57,9 @@ export function PractitionerDashboard() {
               {[
                 { name: 'Sarah M.', datetime: 'Fri, April 26, 2024 · 10:00 AM' },
                 { name: 'Alex T.', datetime: 'Fri, April 26, 2024 · 3:00 PM' },
-              ].map((req) => (
+              ].map((req, idx) => (
                 <article
-                  key={req.name}
+                  key={`${req.name}-${idx}`}
                   className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-soft-card"
                 >
                   <div className="flex items-center gap-3">
@@ -104,8 +104,8 @@ export function PractitionerDashboard() {
               </span>
             </div>
             <div className="mt-3 grid grid-cols-7 gap-1 text-center text-[10px] text-slate-600">
-              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d) => (
-                <div key={d} className="font-semibold">
+              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, idx) => (
+                <div key={`${d}-${idx}`} className="font-semibold">
                   {d}
                 </div>
               ))}
@@ -150,4 +150,3 @@ export function PractitionerDashboard() {
     </DashboardLayout>
   )
 }
-

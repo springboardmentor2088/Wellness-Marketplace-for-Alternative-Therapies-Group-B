@@ -35,7 +35,7 @@ public class AuthController {
         UserEntity user = new UserEntity();
         user.setName(request.getName());
         user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setPassword(passwordEncoder.encode(request.getPassword())); // hashed
         user.setRole(request.getRole().toString());
         user.setSpecialization(request.getSpecialization());
         user.setCity(request.getCity());
@@ -52,6 +52,7 @@ public class AuthController {
         Optional<UserEntity> userOpt = userRepository.findByEmail(request.getEmail());
         if (userOpt.isPresent()) {
             UserEntity user = userOpt.get();
+            // Check password correctly
             if (passwordEncoder.matches(request.getPassword(), user.getPassword())) {
                 String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
                 return ResponseEntity.ok(Collections.singletonMap("accessToken", token));

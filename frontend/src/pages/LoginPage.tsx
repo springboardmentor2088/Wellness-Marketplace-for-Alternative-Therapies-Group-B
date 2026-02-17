@@ -22,7 +22,7 @@ export function LoginPage() {
 
       if (response.role === 'ADMIN') navigate('/dashboard/admin');
       else if (response.role === 'PROVIDER') navigate('/dashboard/practitioner');
-      else navigate('/dashboard/client');
+      else navigate('/dashboard/user'); // fixed from /dashboard/client
 
     } catch (err) {
       setError('Invalid email or password');
