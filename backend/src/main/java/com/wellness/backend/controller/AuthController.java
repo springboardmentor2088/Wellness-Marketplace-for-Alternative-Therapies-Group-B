@@ -6,8 +6,10 @@ import com.wellness.backend.model.UserEntity;
 import com.wellness.backend.repository.UserRepository;
 import com.wellness.backend.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
@@ -23,10 +25,26 @@ public class AuthController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    // 🔥 THIS WILL RESET ADMIN PASSWORD ON STARTUP (ONE TIME)
+    @Bean
+    CommandLineRunner resetAdminPassword() {
+        return args -> {
+            Optional<UserEntity> userOpt = userRepository.findByEmail("***REMOVED***");
+            if (userOpt.isPresent()) {
+                UserEntity user = userOpt.get();
+                user.setPassword(passwordEncoder.encode("***REMOVED***"));
+                userRepository.save(user);
+                System.out.println("✅ Admin password reset successfully!");
+            }
+        };
+    }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             return ResponseEntity.badRequest()
                     .body(Collections.singletonMap("error", "Email already exists"));
@@ -35,7 +53,7 @@ public class AuthController {
         UserEntity user = new UserEntity();
         user.setName(request.getName());
         user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword())); // hashed
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(request.getRole().toString());
         user.setSpecialization(request.getSpecialization());
         user.setCity(request.getCity());
@@ -49,15 +67,18 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+
         Optional<UserEntity> userOpt = userRepository.findByEmail(request.getEmail());
+
         if (userOpt.isPresent()) {
             UserEntity user = userOpt.get();
-            // Check password correctly
+
             if (passwordEncoder.matches(request.getPassword(), user.getPassword())) {
                 String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
                 return ResponseEntity.ok(Collections.singletonMap("accessToken", token));
             }
         }
+
         return ResponseEntity.status(401)
                 .body(Collections.singletonMap("error", "Invalid email or password"));
     }

@@ -1,3 +1,5 @@
+C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellness\backend\config\JwtAuthenticationFilter.java
+C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellness\backend\config\SecurityConfig.java
 C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellness\backend\config\WebConfig.java
 C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellness\backend\config\WebSocketConfig.java
 C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellness\backend\controller\AuthController.java
@@ -9,7 +11,9 @@ C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketpla
 C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellness\backend\dto\RegisterRequest.java
 C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellness\backend\model\UserEntity.java
 C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellness\backend\repository\UserRepository.java
+C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellness\backend\service\CustomUserDetailsService.java
 C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellness\backend\service\JwtService.java
 C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellness\backend\user\UserRole.java
 C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellness\backend\util\JwtUtil.java
+C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellness\backend\util\PasswordGenerator.java
 C:\Career\Internship\Virtual Internship\Infosys\Project\Image Wellness Marketplace for Alternative Therapies\backend\src\main\java\com\wellness\backend\WellnessBackendApplication.java
