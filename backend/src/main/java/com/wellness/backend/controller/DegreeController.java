@@ -18,54 +18,54 @@ import java.nio.file.Paths;
 import java.util.Collections;
 
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/api/degree") // Changed from /api/user
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173") // frontend URL
+@CrossOrigin(origins = "http://localhost:5173")
 public class DegreeController {
 
     private final UserRepository userRepository;
 
-    private final Path uploadDir = Paths.get("uploads/degrees");
+    private final Path uploadDir = Paths.get("C:\\Career\\Internship\\Virtual Internship\\Infosys\\Project\\Image Wellness Marketplace for Alternative Therapies\\backend\\uploads\\degrees");
 
-    @PostMapping("/uploadDegree")
+
+    // 🔹 Upload degree
+    @PostMapping("/upload") // Changed from /uploadDegree
     public ResponseEntity<?> uploadDegree(@RequestParam("file") MultipartFile file,
                                           @RequestParam("userId") Long userId) {
         try {
             UserEntity user = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
-            String fileName = user.getId() + "_degree.pdf";
+            Files.createDirectories(uploadDir); // ensure folder exists
+
+            String fileName = "degree_" + user.getId() + "_" + System.currentTimeMillis() + ".pdf";
             Path path = uploadDir.resolve(fileName);
-            Files.createDirectories(uploadDir); // Ensure folder exists
             Files.write(path, file.getBytes());
 
-            user.setDegreeFile(fileName);
+            user.setDegreeFile("uploads/degrees/" + fileName);
+            user.setVerificationStatus("PENDING");
             userRepository.save(user);
 
-            return ResponseEntity.ok(Collections.singletonMap("message", "Degree uploaded"));
+            return ResponseEntity.ok(Collections.singletonMap("message", "Degree uploaded successfully"));
         } catch (Exception e) {
             return ResponseEntity.status(500)
                     .body(Collections.singletonMap("error", e.getMessage()));
         }
     }
 
-    // ✅ Serve uploaded degree files
-    @GetMapping("/degree/{userId}")
+    // 🔹 Download degree
+    @GetMapping("/{userId}")
     public ResponseEntity<Resource> getDegree(@PathVariable Long userId) {
         try {
             UserEntity user = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
-            if (user.getDegreeFile() == null) {
-                return ResponseEntity.notFound().build();
-            }
+            if (user.getDegreeFile() == null) return ResponseEntity.notFound().build();
 
-            Path filePath = uploadDir.resolve(user.getDegreeFile());
+            Path filePath = Paths.get(user.getDegreeFile());
             Resource resource = new UrlResource(filePath.toUri());
 
-            if (!resource.exists() || !resource.isReadable()) {
-                return ResponseEntity.notFound().build();
-            }
+            if (!resource.exists() || !resource.isReadable()) return ResponseEntity.notFound().build();
 
             return ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_PDF)

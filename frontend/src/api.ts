@@ -37,10 +37,9 @@ export interface Profile {
 
 const apiClient = axios.create({
   baseURL: API_BASE,
-  withCredentials: true, // keep this for cookies if backend sends them
+  withCredentials: true,
 })
 
-// ✅ Interceptor to attach JWT token to every request
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('accessToken')
@@ -49,18 +48,13 @@ apiClient.interceptors.request.use(
     }
     return config
   },
-  (error) => {
-    return Promise.reject(error)
-  }
+  (error) => Promise.reject(error)
 )
 
-// ✅ Interceptor to handle 401/403 globally
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401 || error.response?.status === 403) {
-      console.warn('Unauthorized / Forbidden request', error.response)
-      // optionally clear token or redirect to login
       localStorage.removeItem('accessToken')
       window.location.href = '/login'
     }
@@ -87,7 +81,7 @@ export const api = {
   },
 
   async updateUser(userId: number, data: Partial<Profile>) {
-    const response = await apiClient.put(`/user/${userId}`, data)
+    const response = await apiClient.put(`/user/profile`, data)
     return response.data
   },
 
@@ -102,7 +96,6 @@ export const api = {
     return response.data
   },
 
-  // ✅ ADMIN APIs
   async getPractitioners(): Promise<Profile[]> {
     const response = await apiClient.get('/admin/practitioners')
     return response.data

@@ -36,7 +36,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/provider/**").hasRole("PROVIDER")
                 .requestMatchers("/api/client/**").hasRole("CLIENT")
-                .requestMatchers("/api/user/degree/**").permitAll() // allow public access to degrees
+                .requestMatchers("/api/degree/**").permitAll() // allow public access to degree endpoints
                 .anyRequest().authenticated()
             )
             .userDetailsService(userDetailsService)
