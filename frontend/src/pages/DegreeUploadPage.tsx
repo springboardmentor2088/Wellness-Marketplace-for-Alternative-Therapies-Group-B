@@ -1,63 +1,52 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { TopNav } from '../components/TopNav'
-import { api } from '../api'
-import type { Profile } from '../api'
-
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { TopNav } from '../components/TopNav';
+import { api } from '../api';
+import type { Profile } from '../api';
 
 export function DegreeUploadPage() {
-  const navigate = useNavigate()
-  const [file, setFile] = useState<File | null>(null)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [userProfile, setUserProfile] = useState<Profile | null>(null)
+  const navigate = useNavigate();
+  const [file, setFile] = useState<File | null>(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [userProfile, setUserProfile] = useState<Profile | null>(null);
 
-  // Fetch user profile to get ID
   useEffect(() => {
     api.getProfile()
       .then(profile => setUserProfile(profile))
-      .catch(() => setError('Failed to load user profile'))
-  }, [])
+      .catch(() => setError('Failed to load user profile'));
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0]
-    if (selectedFile) {
-      if (selectedFile.type !== 'application/pdf') {
-        setError('Only PDF files are allowed')
-        setFile(null)
-        return
-      }
-      if (selectedFile.size > 5 * 1024 * 1024) { // 5MB
-        setError('File size must be less than 5MB')
-        setFile(null)
-        return
-      }
-      setFile(selectedFile)
-      setError('')
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+    if (selectedFile.type !== 'application/pdf') {
+      setError('Only PDF files are allowed');
+      setFile(null);
+      return;
     }
-  }
+    if (selectedFile.size > 5 * 1024 * 1024) {
+      setError('File size must be less than 5MB');
+      setFile(null);
+      return;
+    }
+    setFile(selectedFile);
+    setError('');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!file) {
-      setError('Please select a file')
-      return
-    }
-    if (!userProfile) {
-      setError('User profile not loaded yet')
-      return
-    }
-
-    setLoading(true)
+    e.preventDefault();
+    if (!file) return;
+    setLoading(true);
     try {
-      await api.uploadDegree(file, userProfile.id) // ✅ pass userId
-      navigate('/dashboard/practitioner')
-    } catch (error) {
-      setError('Upload failed. Please try again.')
+      await api.uploadDegree(file);
+      navigate('/dashboard/practitioner');
+    } catch {
+      setError('Upload failed. Please try again.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-brand-50 to-emerald-50">
@@ -65,9 +54,7 @@ export function DegreeUploadPage() {
       <main className="mx-auto max-w-2xl px-4 pb-16 pt-10">
         <div className="rounded-2xl bg-white p-6 shadow-soft-card md:p-8">
           <h1 className="text-xl font-semibold text-slate-900">Upload Degree Certificate</h1>
-          <p className="mt-1 text-xs text-slate-600">
-            As a practitioner, please upload your degree certificate for verification.
-          </p>
+          <p className="mt-1 text-xs text-slate-600">Please upload your degree certificate for verification.</p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div>
@@ -81,7 +68,6 @@ export function DegreeUploadPage() {
               {file && <p className="mt-1 text-xs text-slate-600">Selected: {file.name}</p>}
               {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
             </div>
-
             <button
               type="submit"
               disabled={loading || !file}
@@ -93,5 +79,5 @@ export function DegreeUploadPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }

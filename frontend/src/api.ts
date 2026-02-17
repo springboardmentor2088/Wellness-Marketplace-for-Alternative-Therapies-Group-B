@@ -72,59 +72,32 @@ class ApiService {
   }
 
   async getProfile(): Promise<Profile> {
+    const token = localStorage.getItem('accessToken');
+    if (!token) throw new Error('No access token found');
+
     const response = await fetch(`${API_BASE}/user/profile`, {
-      headers: this.getAuthHeaders(),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
     });
+
     if (!response.ok) throw new Error('Failed to fetch profile');
     return response.json();
   }
 
-  async getDashboard(): Promise<DashboardData> {
-    const response = await fetch(`${API_BASE}/user/dashboard`, {
+  async uploadDegree(file: File): Promise<string> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${API_BASE}/user/uploadDegree`, {
+      method: 'POST',
       headers: this.getAuthHeaders(),
+      body: formData,
     });
-    if (!response.ok) throw new Error('Failed to fetch dashboard');
-    return response.json();
-  }
 
-  async uploadDegree(file: File, userId: number): Promise<string> {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('userId', userId.toString()); // ✅ include userId
-
-  const response = await fetch(`${API_BASE}/user/uploadDegree`, {
-    method: 'POST',
-    headers: this.getAuthHeaders(),
-    body: formData,
-  });
-
-  if (!response.ok) throw new Error('Failed to upload degree');
-  return response.text();
-}
-
-
-  async getPendingPractitioners(): Promise<any[]> {
-    const response = await fetch(`${API_BASE}/user/practitioners`, {
-      headers: this.getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error('Failed to fetch pending practitioners');
-    return response.json();
-  }
-
-  async verifyPractitioner(id: number): Promise<void> {
-    const response = await fetch(`${API_BASE}/user/admin/verify/${id}`, {
-      method: 'PUT',
-      headers: this.getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error('Failed to verify practitioner');
-  }
-
-  async rejectPractitioner(id: number): Promise<void> {
-    const response = await fetch(`${API_BASE}/user/admin/reject/${id}`, {
-      method: 'PUT',
-      headers: this.getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error('Failed to reject practitioner');
+    if (!response.ok) throw new Error('Failed to upload degree');
+    return response.text();
   }
 }
 

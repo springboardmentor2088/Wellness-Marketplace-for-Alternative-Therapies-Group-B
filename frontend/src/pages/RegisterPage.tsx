@@ -1,16 +1,14 @@
-// src/pages/RegisterPage.tsx
 import { useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { TopNav } from '../components/TopNav'
 import { api } from '../api'
-import type { RegisterRequest } from '../api'  // ✅ type-only import
+import type { RegisterRequest, AuthResponse } from '../api'
 
 export function RegisterPage() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
-  const defaultRole = params.get('role') ?? 'PATIENT'  // frontend dropdown value
+  const defaultRole = params.get('role') ?? 'PATIENT'
 
-  // Frontend form state
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -20,13 +18,10 @@ export function RegisterPage() {
     country: ''
   })
 
-  // Separate dropdown value for role to fix TS type error
   const [dropdownRole, setDropdownRole] = useState<'PATIENT' | 'PRACTITIONER' | 'ADMIN'>(defaultRole as 'PATIENT' | 'PRACTITIONER' | 'ADMIN')
-
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
 
-  // Map frontend role -> backend enum
   const roleMap: Record<string, 'CLIENT' | 'PROVIDER' | 'ADMIN'> = {
     PATIENT: 'CLIENT',
     PRACTITIONER: 'PROVIDER',
@@ -45,11 +40,8 @@ export function RegisterPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    if (name === 'role') {
-      setDropdownRole(value as 'PATIENT' | 'PRACTITIONER' | 'ADMIN')
-    } else {
-      setFormData({ ...formData, [name]: value })
-    }
+    if (name === 'role') setDropdownRole(value as 'PATIENT' | 'PRACTITIONER' | 'ADMIN')
+    else setFormData({ ...formData, [name]: value })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,7 +51,6 @@ export function RegisterPage() {
     setErrors({})
 
     try {
-      // Payload matches backend RegisterRequest
       const payload: RegisterRequest = {
         name: formData.fullName,
         email: formData.email,
@@ -70,20 +61,16 @@ export function RegisterPage() {
         country: formData.country
       }
 
-      const response = await api.register(payload)
+      const response: AuthResponse = await api.register(payload)
       console.log('REGISTER RESPONSE:', response)
 
-      // Save token if backend returns token
-      if ((response as any).token) {
-        localStorage.setItem('accessToken', (response as any).token)
-      }
+      if (response.accessToken) localStorage.setItem('accessToken', response.accessToken)
 
-      // Redirect based on role
       if (payload.role === 'PROVIDER') navigate('/upload-degree')
       else if (payload.role === 'ADMIN') navigate('/dashboard/admin')
       else navigate('/dashboard/user')
 
-    } catch (error) {
+    } catch (err) {
       setErrors({ general: 'Registration failed. Please try again.' })
     } finally {
       setLoading(false)
@@ -103,40 +90,19 @@ export function RegisterPage() {
             <div className="space-y-4 md:col-span-1">
               <div>
                 <label className="text-xs font-medium text-slate-700">Full name</label>
-                <input
-                  type="text"
-                  name="fullName"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                  placeholder="Your name"
-                />
+                <input type="text" name="fullName" value={formData.fullName} onChange={handleChange} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" placeholder="Your name"/>
                 {errors.fullName && <p className="mt-1 text-xs text-red-600">{errors.fullName}</p>}
               </div>
 
               <div>
                 <label className="text-xs font-medium text-slate-700">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                  placeholder="you@example.com"
-                />
+                <input type="email" name="email" value={formData.email} onChange={handleChange} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" placeholder="you@example.com"/>
                 {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
               </div>
 
               <div>
                 <label className="text-xs font-medium text-slate-700">Password</label>
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                  placeholder="Create a strong password"
-                />
+                <input type="password" name="password" value={formData.password} onChange={handleChange} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" placeholder="Create a strong password"/>
                 {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password}</p>}
               </div>
             </div>
@@ -145,12 +111,7 @@ export function RegisterPage() {
             <div className="space-y-4 md:col-span-1">
               <div>
                 <label className="text-xs font-medium text-slate-700">Role</label>
-                <select
-                  name="role"
-                  value={dropdownRole}
-                  onChange={handleChange}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                >
+                <select name="role" value={dropdownRole} onChange={handleChange} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
                   <option value="PATIENT">Patient</option>
                   <option value="PRACTITIONER">Practitioner</option>
                   <option value="ADMIN">Admin</option>
@@ -160,12 +121,7 @@ export function RegisterPage() {
               {dropdownRole === 'PRACTITIONER' && (
                 <div>
                   <label className="text-xs font-medium text-slate-700">Specialization</label>
-                  <select
-                    name="specialization"
-                    value={formData.specialization}
-                    onChange={handleChange}
-                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                  >
+                  <select name="specialization" value={formData.specialization} onChange={handleChange} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
                     <option value="">Select specialization</option>
                     <option value="Acupuncture">Acupuncture</option>
                     <option value="Massage Therapy">Massage Therapy</option>
@@ -180,36 +136,18 @@ export function RegisterPage() {
 
               <div>
                 <label className="text-xs font-medium text-slate-700">City</label>
-                <input
-                  type="text"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleChange}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                  placeholder="Your city"
-                />
+                <input type="text" name="city" value={formData.city} onChange={handleChange} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" placeholder="Your city"/>
               </div>
 
               <div>
                 <label className="text-xs font-medium text-slate-700">Country</label>
-                <input
-                  type="text"
-                  name="country"
-                  value={formData.country}
-                  onChange={handleChange}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                  placeholder="Your country"
-                />
+                <input type="text" name="country" value={formData.country} onChange={handleChange} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" placeholder="Your country"/>
               </div>
             </div>
 
             <div className="md:col-span-2">
               {errors.general && <p className="text-xs text-red-600">{errors.general}</p>}
-              <button
-                type="submit"
-                disabled={loading}
-                className="mt-2 w-full rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-soft-card hover:bg-brand-700 disabled:opacity-50 md:w-auto"
-              >
+              <button type="submit" disabled={loading} className="mt-2 w-full rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-soft-card hover:bg-brand-700 disabled:opacity-50 md:w-auto">
                 {loading ? 'Creating account...' : 'Create account'}
               </button>
             </div>
