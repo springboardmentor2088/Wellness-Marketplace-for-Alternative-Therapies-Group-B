@@ -87,17 +87,21 @@ class ApiService {
     return response.json();
   }
 
-  async uploadDegree(file: File): Promise<string> {
-    const formData = new FormData();
-    formData.append('file', file);
-    const response = await fetch(`${API_BASE}/user/uploadDegree`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: formData,
-    });
-    if (!response.ok) throw new Error('Failed to upload degree');
-    return response.text();
-  }
+  async uploadDegree(file: File, userId: number): Promise<string> {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('userId', userId.toString()); // ✅ include userId
+
+  const response = await fetch(`${API_BASE}/user/uploadDegree`, {
+    method: 'POST',
+    headers: this.getAuthHeaders(),
+    body: formData,
+  });
+
+  if (!response.ok) throw new Error('Failed to upload degree');
+  return response.text();
+}
+
 
   async getPendingPractitioners(): Promise<any[]> {
     const response = await fetch(`${API_BASE}/user/practitioners`, {

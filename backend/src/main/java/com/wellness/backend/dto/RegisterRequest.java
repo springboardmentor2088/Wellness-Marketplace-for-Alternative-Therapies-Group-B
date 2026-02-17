@@ -1,14 +1,14 @@
 package com.wellness.backend.dto;
 
 import com.wellness.backend.user.UserRole;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
@@ -28,5 +28,9 @@ public class RegisterRequest {
     private String password;
 
     @NotNull(message = "Role is required")
-    private UserRole role; // frontend must send CLIENT, PROVIDER, or ADMIN
+    private UserRole role; // CLIENT, PROVIDER, ADMIN
+
+    private String specialization;
+    private String city;
+    private String country;
 }

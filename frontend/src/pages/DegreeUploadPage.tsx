@@ -1,13 +1,23 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { TopNav } from '../components/TopNav'
 import { api } from '../api'
+import type { Profile } from '../api'
+
 
 export function DegreeUploadPage() {
   const navigate = useNavigate()
   const [file, setFile] = useState<File | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [userProfile, setUserProfile] = useState<Profile | null>(null)
+
+  // Fetch user profile to get ID
+  useEffect(() => {
+    api.getProfile()
+      .then(profile => setUserProfile(profile))
+      .catch(() => setError('Failed to load user profile'))
+  }, [])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -33,9 +43,14 @@ export function DegreeUploadPage() {
       setError('Please select a file')
       return
     }
+    if (!userProfile) {
+      setError('User profile not loaded yet')
+      return
+    }
+
     setLoading(true)
     try {
-      await api.uploadDegree(file)
+      await api.uploadDegree(file, userProfile.id) // ✅ pass userId
       navigate('/dashboard/practitioner')
     } catch (error) {
       setError('Upload failed. Please try again.')

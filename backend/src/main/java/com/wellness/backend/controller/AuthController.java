@@ -15,7 +15,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "*")
 public class AuthController {
 
     @Autowired
@@ -37,26 +36,28 @@ public class AuthController {
         user.setName(request.getName());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(request.getRole() != null ? request.getRole().toString() : "CLIENT");
+        user.setRole(request.getRole().toString());
+        user.setSpecialization(request.getSpecialization());
+        user.setCity(request.getCity());
+        user.setCountry(request.getCountry());
 
         userRepository.save(user);
 
-        // ✅ Return JSON instead of plain text
-        return ResponseEntity.ok(Collections.singletonMap("message", "User registered successfully"));
+        String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
+        return ResponseEntity.ok(Collections.singletonMap("accessToken", token));
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         Optional<UserEntity> userOpt = userRepository.findByEmail(request.getEmail());
-
         if (userOpt.isPresent()) {
             UserEntity user = userOpt.get();
             if (passwordEncoder.matches(request.getPassword(), user.getPassword())) {
                 String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
-                return ResponseEntity.ok(Collections.singletonMap("token", token));
+                return ResponseEntity.ok(Collections.singletonMap("accessToken", token));
             }
         }
         return ResponseEntity.status(401)
-                .body(Collections.singletonMap("error", "Invalid credentials"));
+                .body(Collections.singletonMap("error", "Invalid email or password"));
     }
 }
