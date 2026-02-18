@@ -23,10 +23,7 @@ export function LoginPage() {
 
     try {
       const response = await api.login({ email, password });
-      localStorage.setItem('accessToken', response.accessToken);
-      localStorage.setItem('userRole', response.role);
       localStorage.setItem('userName', response.name);
-      localStorage.setItem('emailVerified', String(response.emailVerified));
       localStorage.setItem('userEmail', email);
 
       if (!response.emailVerified) {

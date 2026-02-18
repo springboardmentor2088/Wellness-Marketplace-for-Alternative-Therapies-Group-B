@@ -57,6 +57,7 @@ public class AuthService {
             user.setCity(request.getCity());
             user.setCountry(request.getCountry());
             user.setEmailVerified(false);
+            user.setVerificationStatus("PENDING");
         }
 
         // Generate 6-digit OTP
@@ -75,5 +76,41 @@ public class AuthService {
 
         String jwt = jwtUtil.generateToken(user.getEmail(), user.getRole());
         return new AuthenticationResponse(jwt, user.getRole(), user.getName(), user.isEmailVerified());
+    }
+
+    @Transactional
+    public AuthenticationResponse verifyOtp(String email, String otp) {
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+
+        if (user.isEmailVerified()) {
+            String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
+            return new AuthenticationResponse(token, user.getRole(), user.getName(), true);
+        }
+
+        if (user.getOtp() == null || !user.getOtp().equals(otp)) {
+            throw new RuntimeException("Invalid OTP code");
+        }
+
+        if (user.getOtpExpiry() == null || user.getOtpExpiry().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("OTP has expired. Please request a new one.");
+        }
+
+        user.setEmailVerified(true);
+        user.setOtp(null);
+        user.setOtpExpiry(null);
+
+        // Role-based verification status
+        if ("CLIENT".equalsIgnoreCase(user.getRole())) {
+            user.setVerificationStatus("APPROVED"); // User/Patient verified immediately
+        } else if ("PROVIDER".equalsIgnoreCase(user.getRole())) {
+            user.setVerificationStatus("PENDING_ADMIN_APPROVAL"); // Practitioners need admin
+            System.out.println("DEBUG: Practitioner " + email + " status set to PENDING_ADMIN_APPROVAL");
+        }
+
+        userRepository.save(user);
+
+        String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
+        return new AuthenticationResponse(token, user.getRole(), user.getName(), true);
     }
 }

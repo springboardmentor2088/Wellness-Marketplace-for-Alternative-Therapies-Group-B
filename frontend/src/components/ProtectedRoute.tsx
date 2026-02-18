@@ -18,7 +18,8 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     }
 
     // Redirect to otp verification if email not verified
-    if (!emailVerified) {
+    // But allow if we are already on the otp-verification page or similar (though ProtectedRoute isn't usually used there)
+    if (token && !emailVerified && location.pathname !== '/otp-verification') {
         return <Navigate to="/otp-verification" replace />;
     }
 

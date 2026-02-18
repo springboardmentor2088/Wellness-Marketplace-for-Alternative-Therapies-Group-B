@@ -11,12 +11,17 @@ export function AdminDashboard() {
   const [confirmingAction, setConfirmingAction] = useState<{ id: number, type: 'APPROVE' | 'REJECT' } | null>(null)
 
   useEffect(() => {
+    setLoading(true)
     api.getUsers()
       .then((data: Profile[]) => {
         setPractitioners(data)
+      })
+      .catch((err) => {
+        console.error('FETCH USERS ERROR:', err)
+      })
+      .finally(() => {
         setLoading(false)
       })
-      .catch(console.error)
   }, [])
   const handleApprove = async (id: number) => {
     setProcessingId(id)
@@ -184,7 +189,7 @@ export function AdminDashboard() {
                               exit={{ opacity: 0 }}
                               className="flex gap-2"
                             >
-                              {(!p.verificationStatus || p.verificationStatus === 'PENDING') && (
+                              {(!p.verificationStatus || p.verificationStatus === 'PENDING' || p.verificationStatus === 'PENDING_ADMIN_APPROVAL') && (
                                 <>
                                   <button
                                     onClick={() => setConfirmingAction({ id: p.id, type: 'APPROVE' })}

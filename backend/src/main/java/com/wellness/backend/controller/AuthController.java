@@ -83,7 +83,6 @@ public class AuthController {
     }
 
     @PostMapping("/verify-otp")
-    @jakarta.transaction.Transactional
     public ResponseEntity<?> verifyOtp(@RequestBody java.util.Map<String, String> request) {
         String email = request.get("email");
         String otp = request.get("otp");
@@ -92,28 +91,12 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Collections.singletonMap("error", "Email and OTP are required"));
         }
 
-        UserEntity user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
-
-        if (user.isEmailVerified()) {
-            return ResponseEntity.ok(Collections.singletonMap("message", "Email already verified"));
+        try {
+            AuthenticationResponse response = authService.verifyOtp(email, otp);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Collections.singletonMap("error", e.getMessage()));
         }
-
-        if (user.getOtp() == null || !user.getOtp().equals(otp)) {
-            return ResponseEntity.badRequest().body(Collections.singletonMap("error", "Invalid OTP code"));
-        }
-
-        if (user.getOtpExpiry() == null || user.getOtpExpiry().isBefore(LocalDateTime.now())) {
-            return ResponseEntity.badRequest()
-                    .body(Collections.singletonMap("error", "OTP has expired. Please request a new one."));
-        }
-
-        user.setEmailVerified(true);
-        user.setOtp(null);
-        user.setOtpExpiry(null);
-        userRepository.save(user);
-
-        return ResponseEntity.ok(Collections.singletonMap("message", "Email verified successfully"));
     }
 
     @PostMapping("/resend-otp")

@@ -21,10 +21,13 @@ public class AdminController {
 
     @GetMapping("/users")
     public ResponseEntity<List<UserEntity>> getAllUsers() {
-        // Return all users except the admin itself
-        return ResponseEntity.ok(userRepository.findAll().stream()
-                .filter(u -> !"ADMIN".equalsIgnoreCase(u.getRole()))
-                .toList());
+        System.out.println("DEBUG: Fetching users for admin dashboard");
+        List<UserEntity> practitioners = userRepository.findByRole("PROVIDER").stream()
+                .filter(u -> "PENDING_ADMIN_APPROVAL".equalsIgnoreCase(u.getVerificationStatus()) ||
+                        "PENDING".equalsIgnoreCase(u.getVerificationStatus()))
+                .toList();
+        System.out.println("DEBUG: Found " + practitioners.size() + " pending practitioners");
+        return ResponseEntity.ok(practitioners);
     }
 
     @PutMapping("/approve/{id}")

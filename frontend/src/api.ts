@@ -80,12 +80,16 @@ export const api = {
   async login(data: LoginRequest): Promise<AuthResponse> {
     const response = await apiClient.post('/auth/login', data)
     localStorage.setItem('accessToken', response.data.accessToken)
+    localStorage.setItem('userRole', response.data.role)
+    localStorage.setItem('emailVerified', String(response.data.emailVerified))
     return response.data
   },
 
   async register(data: RegisterRequest): Promise<AuthResponse> {
     const response = await apiClient.post('/auth/register', data)
     localStorage.setItem('accessToken', response.data.accessToken)
+    localStorage.setItem('userRole', response.data.role)
+    localStorage.setItem('emailVerified', String(response.data.emailVerified))
     return response.data
   },
 
@@ -143,8 +147,11 @@ export const api = {
     return response.data
   },
 
-  async verifyOtp(email: string, otp: string): Promise<{ message: string }> {
+  async verifyOtp(email: string, otp: string): Promise<AuthResponse> {
     const response = await apiClient.post('/auth/verify-otp', { email, otp })
+    localStorage.setItem('accessToken', response.data.accessToken)
+    localStorage.setItem('userRole', response.data.role)
+    localStorage.setItem('emailVerified', String(response.data.emailVerified))
     return response.data
   },
 

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Mail, ArrowRight, RefreshCw, ShieldCheck } from 'lucide-react'
+import { ArrowRight, RefreshCw, ShieldCheck } from 'lucide-react'
 import { api } from '../api/api'
 
 export function OtpVerificationPage() {
@@ -57,10 +57,9 @@ export function OtpVerificationPage() {
         setLoading(true)
         setError('')
         try {
-            await api.verifyOtp(email, otpValue)
-            localStorage.setItem('emailVerified', 'true')
+            const response = await api.verifyOtp(email, otpValue)
 
-            const role = localStorage.getItem('userRole')
+            const role = response.role
             if (role === 'ADMIN') navigate('/admin')
             else if (role === 'PROVIDER') navigate('/practitioner')
             else navigate('/user')
