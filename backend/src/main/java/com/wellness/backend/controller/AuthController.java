@@ -5,6 +5,7 @@ import com.wellness.backend.dto.LoginRequest;
 import com.wellness.backend.dto.RegisterRequest;
 import com.wellness.backend.model.UserEntity;
 import com.wellness.backend.repository.UserRepository;
+import com.wellness.backend.service.AuthService;
 import com.wellness.backend.service.EmailService;
 import com.wellness.backend.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,9 @@ public class AuthController {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private AuthService authService;
+
     // 🔥 Reset admin password on startup
     @Bean
     CommandLineRunner initializeData() {
@@ -63,44 +67,19 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    @jakarta.transaction.Transactional
     public ResponseEntity<?> register(@jakarta.validation.Valid @RequestBody RegisterRequest request) {
         System.out.println("REGISTER REQUEST: " + request);
 
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            return ResponseEntity.status(org.springframework.http.HttpStatus.CONFLICT)
-                    .body(Collections.singletonMap("error", "Email already exists"));
-        }
-
-        UserEntity user = new UserEntity();
-        user.setName(request.getName());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(request.getRole().toString());
-        user.setSpecialization(request.getSpecialization());
-        user.setCity(request.getCity());
-        user.setCountry(request.getCountry());
-
-        // Generate 6-digit OTP
-        String otp = String.format("%06d", new Random().nextInt(999999));
-        user.setOtp(otp);
-        user.setOtpExpiry(LocalDateTime.now().plusMinutes(10));
-        user.setEmailVerified(false);
-
-        userRepository.save(user);
-
-        // Send OTP email
         try {
-            emailService.sendOtpEmail(user.getEmail(), otp);
-        } catch (Exception e) {
-            System.out.println("❌ Email dispatch failed for " + user.getEmail() + ": " + e.getMessage());
-            // DO NOT throw exception; allow registration to succeed
+            AuthenticationResponse response = authService.register(request);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            if ("Email already exists and is verified".equals(e.getMessage())) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.CONFLICT)
+                        .body(Collections.singletonMap("error", "Email already exists"));
+            }
+            return ResponseEntity.badRequest().body(Collections.singletonMap("error", e.getMessage()));
         }
-
-        String jwt = jwtUtil.generateToken(user.getEmail(), user.getRole());
-
-        return ResponseEntity.ok(
-                new AuthenticationResponse(jwt, user.getRole(), user.getName(), user.isEmailVerified()));
     }
 
     @PostMapping("/verify-otp")

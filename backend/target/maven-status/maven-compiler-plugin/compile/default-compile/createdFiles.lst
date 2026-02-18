@@ -1,4 +1,5 @@
 com\wellness\backend\controller\AdminController.class
+com\wellness\backend\service\AuthService.class
 com\wellness\backend\util\JwtUtil.class
 com\wellness\backend\repository\UserRepository.class
 com\wellness\backend\config\JwtAuthenticationFilter.class
@@ -6,6 +7,7 @@ com\wellness\backend\dto\AuthenticationRequest.class
 com\wellness\backend\controller\BookingController.class
 com\wellness\backend\user\UserRole.class
 com\wellness\backend\repository\BookingRepository.class
+com\wellness\backend\exception\GlobalExceptionHandler.class
 com\wellness\backend\WellnessBackendApplication.class
 com\wellness\backend\controller\UserController.class
 com\wellness\backend\dto\AuthenticationResponse.class
@@ -17,6 +19,7 @@ com\wellness\backend\model\BookingEntity.class
 com\wellness\backend\config\WebConfig$1.class
 com\wellness\backend\dto\RegisterRequest$RegisterRequestBuilder.class
 com\wellness\backend\config\WebSocketConfig.class
+com\wellness\backend\model\UserRole.class
 com\wellness\backend\dto\RegisterRequest.class
 com\wellness\backend\dto\AuthenticationRequest$AuthenticationRequestBuilder.class
 com\wellness\backend\service\JwtService.class
