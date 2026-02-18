@@ -2,7 +2,7 @@ import { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
 type DashboardLayoutProps = {
-  sidebarItems: { label: string; to?: string; active?: boolean }[]
+  sidebarItems: { label: string; path?: string; active?: boolean; icon?: ReactNode }[]
   children: ReactNode
 }
 
@@ -28,14 +28,15 @@ export function DashboardLayout({ sidebarItems, children }: DashboardLayoutProps
               : 'text-emerald-100/90 hover:bg-brand-600/60'
 
             const content = (
-              <span className="truncate">
-                {item.label}
-              </span>
+              <>
+                {item.icon && <span className="opacity-70">{item.icon}</span>}
+                <span className="truncate">{item.label}</span>
+              </>
             )
 
-            if (item.to) {
+            if (item.path) {
               return (
-                <Link key={item.label} to={item.to} className={`${baseClasses} ${activeClasses}`}>
+                <Link key={item.label} to={item.path} className={`${baseClasses} ${activeClasses}`}>
                   {content}
                 </Link>
               )

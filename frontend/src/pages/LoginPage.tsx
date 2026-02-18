@@ -19,10 +19,11 @@ export function LoginPage() {
     try {
       const response = await api.login({ email, password });
       localStorage.setItem('accessToken', response.accessToken);
+      localStorage.setItem('userRole', response.role);
 
-      if (response.role === 'ADMIN') navigate('/dashboard/admin');
-      else if (response.role === 'PROVIDER') navigate('/dashboard/practitioner');
-      else navigate('/dashboard/user'); // fixed from /dashboard/client
+      if (response.role === 'ADMIN') navigate('/admin');
+      else if (response.role === 'PROVIDER') navigate('/practitioner');
+      else navigate('/user');
 
     } catch (err) {
       setError('Invalid email or password');
@@ -35,7 +36,7 @@ export function LoginPage() {
     <div className="min-h-screen bg-gradient-to-b from-brand-50 to-emerald-50">
       <TopNav />
       <main className="mx-auto flex max-w-4xl flex-col gap-10 px-4 pb-16 pt-10 md:flex-row md:items-center">
-        
+
         <section className="flex-1">
           <h1 className="text-2xl font-semibold text-slate-900">Welcome back</h1>
           <p className="mt-2 text-sm text-slate-600">Sign in to manage your wellness sessions and connect with practitioners.</p>

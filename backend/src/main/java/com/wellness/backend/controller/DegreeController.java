@@ -26,20 +26,19 @@ public class DegreeController {
     private final UserRepository userRepository;
 
     private final Path uploadDir = Paths.get(
-        "C:\\Career\\Internship\\Virtual Internship\\Infosys\\Project\\Image Wellness Marketplace for Alternative Therapies\\backend\\uploads\\degrees"
-    );
+            "C:\\Career\\Internship\\Virtual Internship\\Infosys\\Project\\Image Wellness Marketplace for Alternative Therapies\\backend\\uploads\\degrees");
 
     // 🔹 Upload degree
     @PostMapping("/upload")
     public ResponseEntity<?> uploadDegree(@RequestParam("file") MultipartFile file,
-                                          @RequestParam("userId") Long userId) {
+            @RequestParam("userId") Long userId) {
         try {
             UserEntity user = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
             Files.createDirectories(uploadDir); // ensure folder exists
 
-            String fileName = "degree_" + user.getId() + "_" + System.currentTimeMillis() + ".pdf";
+            String fileName = userId + "_degrees.pdf";
             Path path = uploadDir.resolve(fileName);
             Files.write(path, file.getBytes());
 
@@ -62,7 +61,8 @@ public class DegreeController {
             UserEntity user = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
-            if (user.getDegreeFile() == null) return ResponseEntity.notFound().build();
+            if (user.getDegreeFile() == null)
+                return ResponseEntity.notFound().build();
 
             Path filePath = Paths.get(user.getDegreeFile());
             if (!filePath.isAbsolute()) {
@@ -72,7 +72,8 @@ public class DegreeController {
 
             Resource resource = new UrlResource(filePath.toUri());
 
-            if (!resource.exists() || !resource.isReadable()) return ResponseEntity.notFound().build();
+            if (!resource.exists() || !resource.isReadable())
+                return ResponseEntity.notFound().build();
 
             return ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_PDF)

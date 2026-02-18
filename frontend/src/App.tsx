@@ -6,6 +6,8 @@ import { DegreeUploadPage } from './pages/DegreeUploadPage'
 import { UserDashboard } from './pages/UserDashboard'
 import { PractitionerDashboard } from './pages/PractitionerDashboard'
 import { AdminDashboard } from './pages/AdminDashboard'
+import { MarketplacePage } from './pages/MarketplacePage'
+import { ProtectedRoute } from './components/ProtectedRoute'
 
 function App() {
   return (
@@ -19,10 +21,25 @@ function App() {
         {/* Degree Upload */}
         <Route path="/upload-degree" element={<DegreeUploadPage />} />
 
+        {/* Marketplace */}
+        <Route path="/marketplace" element={<MarketplacePage />} />
+
         {/* Dashboards */}
-        <Route path="/dashboard/user" element={<UserDashboard />} />
-        <Route path="/dashboard/practitioner" element={<PractitionerDashboard />} />
-        <Route path="/dashboard/admin" element={<AdminDashboard />} />
+        <Route path="/user" element={
+          <ProtectedRoute allowedRoles={['CLIENT']}>
+            <UserDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/practitioner" element={
+          <ProtectedRoute allowedRoles={['PROVIDER']}>
+            <PractitionerDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin" element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <AdminDashboard />
+          </ProtectedRoute>
+        } />
 
         {/* Redirect unknown routes to landing page */}
         <Route path="*" element={<Navigate to="/" replace />} />

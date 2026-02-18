@@ -1,129 +1,184 @@
 import { useEffect, useState } from 'react'
 import { DashboardLayout } from '../components/DashboardLayout'
 import { api } from '../api'
+import type { Profile, Booking } from '../api'
+import { Calendar, Award, Clock, ShoppingBag, MessageSquare, Sparkles } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 
 export function UserDashboard() {
-  const [profile, setProfile] = useState<any>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [bookings, setBookings] = useState<Booking[]>([])
 
   useEffect(() => {
-    api.getProfile().then(setProfile).catch(console.error)
+    fetchData()
   }, [])
 
-  if (!profile) return <div>Loading...</div>
+  const fetchData = async () => {
+    try {
+      const userProfile = await api.getProfile()
+      setProfile(userProfile)
+      if (userProfile.id) {
+        const userBookings = await api.getUserBookings(userProfile.id)
+        setBookings(userBookings)
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  if (!profile) return <div className="flex items-center justify-center h-screen italic text-gray-400">Loading your wellness journey...</div>
 
   return (
     <DashboardLayout
       sidebarItems={[
-        { label: 'Dashboard', active: true },
-        { label: 'Book Therapy', to: '#' },
-        { label: 'Product Store', to: '#' },
-        { label: 'My Orders', to: '#' },
-        { label: 'My Sessions', to: '#' },
-        { label: 'Reviews', to: '#' },
-        { label: 'Community Q&A', to: '#' },
-        { label: 'AI Recommendations', to: '#' },
+        { label: 'Dashboard', active: true, path: '/dashboard' },
+        { label: 'Marketplace', path: '/marketplace' },
+        { label: 'My Sessions', path: '/sessions' },
+        { label: 'Product Store', path: '#' },
+        { label: 'Wellness AI', path: '#' },
       ]}
     >
-      <div className="grid gap-5 lg:grid-cols-[2fr,1.2fr]">
-        <section className="space-y-5">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl bg-white p-4 shadow-soft-card">
-              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-brand-600">
-                Upcoming Therapy
-              </p>
-              <p className="mt-2 text-sm font-semibold text-slate-900">
-                Acupuncture with Dr. Smith
-              </p>
-              <p className="mt-1 text-xs text-slate-600">Fri, April 26, 2024 · 10:00 AM</p>
-              <button className="mt-3 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-semibold text-brand-800">
-                Confirmed
-              </button>
+      <div className="p-6 space-y-8 max-w-7xl mx-auto">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white/5 backdrop-blur-xl p-8 rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden relative group">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="relative z-10">
+            <h1 className="text-4xl font-black tracking-tight text-white mb-2">
+              Hello, <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">{profile.name}</span>
+            </h1>
+            <p className="text-gray-400 flex items-center gap-2">
+              <Sparkles size={16} className="text-amber-400" /> Track your wellness and upcoming sessions
+            </p>
+          </div>
+          <Link to="/marketplace" className="relative z-10 bg-white text-black px-6 py-3 rounded-full font-bold hover:scale-105 transition-transform shadow-xl shadow-white/10">
+            Book New Session
+          </Link>
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <motion.div
+                whileHover={{ y: -5 }}
+                className="bg-gradient-to-br from-emerald-500/20 to-teal-500/20 backdrop-blur-md p-6 rounded-3xl border border-emerald-500/20 shadow-lg relative overflow-hidden"
+              >
+                <div className="absolute -top-4 -right-4 bg-emerald-500/10 p-8 rounded-full blur-2xl" />
+                <p className="text-emerald-400 text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <Clock size={14} /> Next Session
+                </p>
+                {bookings.length > 0 ? (
+                  <div>
+                    <p className="text-xl font-bold text-white mb-1">
+                      Session with Practitioner #{bookings[0].practitionerId}
+                    </p>
+                    <p className="text-sm text-emerald-400/80">
+                      {bookings[0].bookingDate ? new Date(bookings[0].bookingDate).toLocaleDateString() : 'Date TBD'}
+                    </p>
+                    <div className="mt-4 flex items-center gap-2">
+                      <span className="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full text-[10px] font-black uppercase border border-emerald-500/30">
+                        {bookings[0].status}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-400 italic py-4">No sessions scheduled.</p>
+                )}
+              </motion.div>
+
+              <motion.div
+                whileHover={{ y: -5 }}
+                className="bg-gradient-to-br from-amber-500/20 to-orange-500/20 backdrop-blur-md p-6 rounded-3xl border border-amber-500/20 shadow-lg relative overflow-hidden"
+              >
+                <div className="absolute -top-4 -right-4 bg-amber-500/10 p-8 rounded-full blur-2xl" />
+                <p className="text-amber-400 text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <Award size={14} /> Wellness Points
+                </p>
+                <p className="text-4xl font-black text-white mb-1">1,240</p>
+                <p className="text-sm text-amber-400/80">Keep going! You're in the top 5%</p>
+              </motion.div>
             </div>
-            <div className="rounded-2xl bg-gradient-to-br from-amber-50 to-emerald-50 p-4 shadow-soft-card">
-              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-amber-700">
-                Wellness Points
-              </p>
-              <p className="mt-2 text-3xl font-semibold text-slate-900">120</p>
-              <p className="mt-1 text-xs text-slate-600">
-                Earned from your recent wellness activities.
-              </p>
-              <button className="mt-3 rounded-full border border-amber-500/60 px-3 py-1 text-[11px] font-semibold text-amber-800">
-                View details
-              </button>
-            </div>
+
+            <section className="bg-white/5 backdrop-blur-md rounded-[2.5rem] border border-white/10 p-8 shadow-xl">
+              <h2 className="text-2xl font-black text-white mb-8 flex items-center gap-3">
+                <Calendar size={24} className="text-blue-400" /> Your Booking History
+              </h2>
+              <div className="space-y-4">
+                {bookings.length > 0 ? (
+                  bookings.map((booking, idx) => (
+                    <motion.div
+                      key={booking.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.1 }}
+                      className="flex items-center justify-between p-5 bg-white/5 rounded-2xl border border-white/5 hover:border-white/20 hover:bg-white/10 transition-all group"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold group-hover:scale-110 transition-transform">
+                          {idx + 1}
+                        </div>
+                        <div>
+                          <p className="font-bold text-white">Practitioner ID: {booking.practitionerId}</p>
+                          <p className="text-xs text-gray-500">{booking.bookingDate ? new Date(booking.bookingDate).toLocaleString() : 'Date Pending'}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border shadow-sm ${booking.status === 'CONFIRMED' ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10' :
+                            booking.status === 'CANCELLED' ? 'border-rose-500/30 text-rose-400 bg-rose-500/10' :
+                              'border-blue-500/30 text-blue-400 bg-blue-500/10'
+                          }`}>
+                          {booking.status}
+                        </span>
+                      </div>
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="py-12 text-center">
+                    <div className="bg-white/5 inline-block p-6 rounded-full mb-4">
+                      <Calendar size={32} className="text-gray-600" />
+                    </div>
+                    <p className="text-gray-500 font-medium">No bookings yet. Start your journey today!</p>
+                  </div>
+                )}
+              </div>
+            </section>
           </div>
 
-          <section>
-            <h2 className="text-sm font-semibold text-slate-900">Book a Therapy Session</h2>
-            <div className="mt-3 grid gap-4 md:grid-cols-2">
-              <article className="flex gap-3 rounded-2xl bg-white p-4 shadow-soft-card">
-                <div className="h-16 w-16 flex-shrink-0 rounded-xl bg-[url('https://images.pexels.com/photos/3738341/pexels-photo-3738341.jpeg?auto=compress&cs=tinysrgb&w=200')] bg-cover bg-center" />
-                <div className="flex flex-1 flex-col justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">Dr. Emily Johnson</p>
-                    <p className="text-xs text-slate-500">Ayurveda · 4.9 ★</p>
+          <aside className="space-y-8">
+            <section className="bg-gradient-to-b from-white/5 to-transparent backdrop-blur-md rounded-3xl border border-white/10 p-6 shadow-lg">
+              <h2 className="text-lg font-black text-white mb-6 flex items-center gap-2">
+                <ShoppingBag size={18} className="text-purple-400" /> Quick Store
+              </h2>
+              <div className="space-y-4">
+                {[
+                  { name: 'Organic Lavender Oil', price: '$22', delivered: true },
+                  { name: 'Meditation Cushion', price: '$45', delivered: false },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+                    <div>
+                      <p className="text-sm font-bold text-white">{item.name}</p>
+                      <p className="text-xs text-gray-500">{item.price} · {item.delivered ? 'Delivered' : 'In Transit'}</p>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between text-[11px] text-slate-600">
-                    <span>Fri, April 26 · 10:00 AM</span>
-                    <button className="rounded-full bg-brand-600 px-3 py-1 text-[11px] font-semibold text-white">
-                      Book now
-                    </button>
-                  </div>
-                </div>
-              </article>
-              <article className="flex gap-3 rounded-2xl bg-white p-4 shadow-soft-card">
-                <div className="h-16 w-16 flex-shrink-0 rounded-xl bg-[url('https://images.pexels.com/photos/3738413/pexels-photo-3738413.jpeg?auto=compress&cs=tinysrgb&w=200')] bg-cover bg-center" />
-                <div className="flex flex-1 flex-col justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">Dr. John Smith</p>
-                    <p className="text-xs text-slate-500">Acupuncture · 4.8 ★</p>
-                  </div>
-                  <div className="flex items-center justify-between text-[11px] text-slate-600">
-                    <span>Sun, April 28 · 2:00 PM</span>
-                    <button className="rounded-full bg-brand-600 px-3 py-1 text-[11px] font-semibold text-white">
-                      Book now
-                    </button>
-                  </div>
-                </div>
-              </article>
-            </div>
-          </section>
-        </section>
+                ))}
+              </div>
+            </section>
 
-        <aside className="space-y-4">
-          <section className="rounded-2xl bg-white p-4 shadow-soft-card">
-            <h2 className="text-sm font-semibold text-slate-900">Latest Orders</h2>
-            <div className="mt-3 space-y-3 text-xs">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-slate-800">Essential Oils</p>
-                  <p className="text-slate-500">$25 · Delivered</p>
+            <section className="bg-gradient-to-b from-white/5 to-transparent backdrop-blur-md rounded-3xl border border-white/10 p-6 shadow-lg">
+              <h2 className="text-lg font-black text-white mb-6 flex items-center gap-2">
+                <MessageSquare size={18} className="text-blue-400" /> Community
+              </h2>
+              <div className="space-y-4">
+                <p className="text-xs text-gray-400 leading-relaxed italic border-l-2 border-blue-500/30 pl-3">
+                  "The acupuncture session last week completely cleared my chronic migraines. Highly recommend Dr. Emily!"
+                </p>
+                <div className="flex gap-2">
+                  <span className="bg-blue-500/10 text-blue-400 px-2 py-1 rounded text-[10px] font-bold">#Acupuncture</span>
+                  <span className="bg-purple-500/10 text-purple-400 px-2 py-1 rounded text-[10px] font-bold">#Wellness</span>
                 </div>
-                <button className="rounded-full border border-emerald-200 px-3 py-1 text-[11px] font-semibold text-brand-700">
-                  View details
-                </button>
               </div>
-            </div>
-          </section>
-
-          <section className="rounded-2xl bg-white p-4 shadow-soft-card">
-            <h2 className="text-sm font-semibold text-slate-900">Community Q&amp;A</h2>
-            <div className="mt-3 space-y-3 text-xs text-slate-700">
-              <div>
-                <p>What are the benefits of acupuncture?</p>
-                <button className="mt-2 rounded-full border border-brand-500/50 px-3 py-1 text-[11px] font-semibold text-brand-700">
-                  View answers
-                </button>
-              </div>
-              <div>
-                <p>Tips for better sleep?</p>
-                <button className="mt-2 rounded-full border border-brand-500/50 px-3 py-1 text-[11px] font-semibold text-brand-700">
-                  View answers
-                </button>
-              </div>
-            </div>
-          </section>
-        </aside>
+            </section>
+          </aside>
+        </div>
       </div>
     </DashboardLayout>
   )

@@ -24,6 +24,16 @@ export interface Profile {
   specialization?: string
   verificationStatus?: string
   degreeFile?: string
+  verified?: boolean
+}
+
+export interface Booking {
+  id?: number
+  userId: number
+  practitionerId: number
+  bookingDate?: string
+  status: 'PENDING' | 'CONFIRMED' | 'CANCELLED'
+  notes?: string
 }
 
 const apiClient = axios.create({ baseURL: API_BASE, withCredentials: true })
@@ -88,4 +98,25 @@ export const api = {
 
   async approvePractitioner(id: number) { await apiClient.put(`/admin/approve/${id}`) },
   async rejectPractitioner(id: number) { await apiClient.put(`/admin/reject/${id}`) },
+
+  // Bookings
+  async createBooking(data: Booking): Promise<Booking> {
+    const response = await apiClient.post('/bookings', data)
+    return response.data
+  },
+
+  async getUserBookings(userId: number): Promise<Booking[]> {
+    const response = await apiClient.get(`/bookings/user/${userId}`)
+    return response.data
+  },
+
+  async getPractitionerBookings(practitionerId: number): Promise<Booking[]> {
+    const response = await apiClient.get(`/bookings/practitioner/${practitionerId}`)
+    return response.data
+  },
+
+  async getAllPractitioners(): Promise<Profile[]> {
+    const response = await apiClient.get('/admin/practitioners')
+    return response.data
+  }
 }
