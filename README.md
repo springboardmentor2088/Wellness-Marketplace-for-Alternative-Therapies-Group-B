@@ -34,13 +34,13 @@ Installation
 
 Database Setup
 
-Configuration
-
 Running the Application
 
 Project Structure
 
 Security Features
+
+Backlog
 
 🎯 Problem Statement (Module 1)
 
@@ -57,15 +57,21 @@ Maintain authentication and session security
 This module focuses on building the foundational authentication and profile management system required for a scalable wellness marketplace.
 
 🚀 Milestone 1 (Week 1–2)
-Implemented:
+Implemented
 
-✅ Registration & Login with JWT Authentication
-✅ Role-based access (CLIENT, PROVIDER, ADMIN)
-✅ Practitioner profile creation
-✅ Specialization tagging
-✅ Practitioner document upload
-✅ Admin verification workflow
-✅ User dashboard with session history structure
+Registration & Login with JWT Authentication
+
+Role-based access (CLIENT, PROVIDER, ADMIN)
+
+Practitioner profile creation
+
+Specialization tagging
+
+Practitioner document upload
+
+Admin verification workflow
+
+User dashboard with session history structure
 
 🛠️ Tech Stack
 Frontend
@@ -109,21 +115,19 @@ Maven
 Git
 
 🚀 Installation
-git clone <your-repository-url>
+git clone <https://github.com/arahanxd/Wellness-Marketplace-for-Alternative-Therapies.git>
 cd Wellness-Marketplace-for-Alternative-Therapies
 🗄️ Database Setup
 
 Open MySQL and run:
 
+```sql
 CREATE DATABASE wellness_marketplace;
+```
 
-If a database dump is provided:
+If a database dump is provided (wellness_marketplace.sql), import it using MySQL Workbench:
 
-wellness_marketplace.sql
-
-Import it via:
-
-MySQL Workbench → Server → Data Import → Select File → Start Import
+Server → Data Import → Select File → Start Import
 
 ⚠️ Important: Database Credentials
 
@@ -138,27 +142,37 @@ backend/src/main/resources/application.properties
 
 Modify:
 
+```properties
 spring.datasource.username=YOUR_MYSQL_USERNAME
 spring.datasource.password=YOUR_MYSQL_PASSWORD
+```
 
 Then restart the backend server.
 
 ▶ Running the Application
 Start Backend
+
+```cmd
 cd backend
 mvn spring-boot:run
+```
 
 If it doesn’t start properly, run:
 
+```cmd
 mvn clean spring-boot:run
+```
 
 Backend runs at:
 
 http://localhost:8080
 Start Frontend
+
+```cmd
 cd frontend
 npm install
 npm run dev
+```
 
 Frontend runs at:
 
@@ -214,10 +228,10 @@ Role-based dashboards foundation
 
 The following features are planned for future milestones:
 
-Products tab where practitioners can list and sell their wellness products (e.g., medicines, therapy-related items).
+Products tab where practitioners can list and sell their wellness products (e.g., medicines, therapy-related items)
 
-Users will be able to browse and purchase these products.
+Users will be able to browse and purchase these products
 
-Product order history tracking for users.
+Product order history tracking for users
 
-Sales and order management history for practitioners.
+Sales and order management history for practitioners
