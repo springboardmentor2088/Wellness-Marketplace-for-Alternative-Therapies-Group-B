@@ -86,7 +86,7 @@ This module focuses on building the foundational authentication and profile mana
 
 ## 🚀 Installation
 ```bash
-git clone <https://github.com/arahanxd/Wellness-Marketplace-for-Alternative-Therapies.git   >
+git clone <https://github.com/arahanxd/Wellness-Marketplace-for-Alternative-Therapies.git>
 cd Wellness-Marketplace-for-Alternative-Therapies
 ```
 
@@ -184,7 +184,7 @@ frontend/
 - Practitioner verification module
 - Role-based dashboards foundation
 
-## 📌 Backlog (Upcoming Features)
+## 📌 Upcoming Features (Pending)
 
 - Products tab where practitioners can list and sell their wellness products (e.g., medicines, therapy-related items)
 - Users will be able to browse and purchase these products
