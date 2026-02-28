@@ -667,7 +667,7 @@ export function PractitionerDashboard() {
                       <Calendar size={24} className="text-brand-600" /> Session Calendar
                     </h3>
                   </div>
-                  <SessionCalendar sessions={sessions} perspective="PROVIDER" />
+                  <SessionCalendar sessions={sessions} role="practitioner" />
                 </section>
 
                 <section className="bg-white p-10 rounded-[3rem] border border-brand-100/50 shadow-xl shadow-brand-500/5">
