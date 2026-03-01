@@ -6,6 +6,7 @@ C:\Career\Internship\Virtual Internship\Infosys\Working Project\Antigravity\Well
 C:\Career\Internship\Virtual Internship\Infosys\Working Project\Antigravity\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellness\backend\config\WebMvcConfig.java
 C:\Career\Internship\Virtual Internship\Infosys\Working Project\Antigravity\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellness\backend\config\WebSocketConfig.java
 C:\Career\Internship\Virtual Internship\Infosys\Working Project\Antigravity\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellness\backend\controller\AdminController.java
+C:\Career\Internship\Virtual Internship\Infosys\Working Project\Antigravity\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellness\backend\controller\AnalyticsController.java
 C:\Career\Internship\Virtual Internship\Infosys\Working Project\Antigravity\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellness\backend\controller\AuthController.java
 C:\Career\Internship\Virtual Internship\Infosys\Working Project\Antigravity\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellness\backend\controller\BookingController.java
 C:\Career\Internship\Virtual Internship\Infosys\Working Project\Antigravity\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellness\backend\controller\DegreeController.java
@@ -23,6 +24,8 @@ C:\Career\Internship\Virtual Internship\Infosys\Working Project\Antigravity\Well
 C:\Career\Internship\Virtual Internship\Infosys\Working Project\Antigravity\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellness\backend\dto\OrderDTO.java
 C:\Career\Internship\Virtual Internship\Infosys\Working Project\Antigravity\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellness\backend\dto\OrderRequestDTO.java
 C:\Career\Internship\Virtual Internship\Infosys\Working Project\Antigravity\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellness\backend\dto\OrderResponseDTO.java
+C:\Career\Internship\Virtual Internship\Infosys\Working Project\Antigravity\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellness\backend\dto\PatientAnalyticsDTO.java
+C:\Career\Internship\Virtual Internship\Infosys\Working Project\Antigravity\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellness\backend\dto\PractitionerAnalyticsDTO.java
 C:\Career\Internship\Virtual Internship\Infosys\Working Project\Antigravity\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellness\backend\dto\PractitionerStatsDTO.java
 C:\Career\Internship\Virtual Internship\Infosys\Working Project\Antigravity\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellness\backend\dto\ProductRequestDTO.java
 C:\Career\Internship\Virtual Internship\Infosys\Working Project\Antigravity\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellness\backend\dto\ProductResponseDTO.java
@@ -56,6 +59,7 @@ C:\Career\Internship\Virtual Internship\Infosys\Working Project\Antigravity\Well
 C:\Career\Internship\Virtual Internship\Infosys\Working Project\Antigravity\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellness\backend\repository\TherapySessionRepository.java
 C:\Career\Internship\Virtual Internship\Infosys\Working Project\Antigravity\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellness\backend\repository\UserRepository.java
 C:\Career\Internship\Virtual Internship\Infosys\Working Project\Antigravity\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellness\backend\scheduler\SessionReminderScheduler.java
+C:\Career\Internship\Virtual Internship\Infosys\Working Project\Antigravity\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellness\backend\service\AnalyticsService.java
 C:\Career\Internship\Virtual Internship\Infosys\Working Project\Antigravity\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellness\backend\service\AuthService.java
 C:\Career\Internship\Virtual Internship\Infosys\Working Project\Antigravity\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellness\backend\service\BookingService.java
 C:\Career\Internship\Virtual Internship\Infosys\Working Project\Antigravity\Wellness-Marketplace-for-Alternative-Therapies\backend\src\main\java\com\wellness\backend\service\CustomUserDetailsService.java

@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react'
 import { DashboardLayout } from '../components/DashboardLayout'
 import { SessionCalendar } from '../components/SessionCalendar'
 import { SessionReminderBanner } from '../components/SessionReminderBanner'
-import { api, type Profile, type Booking, type SessionBooking } from '../api'
+import { PatientActivity } from '../components/PatientActivity'
+import { api, type Profile, type Booking, type SessionBooking, type PatientAnalytics } from '../api'
 import {
   Calendar, LayoutDashboard, ShoppingBag, MessageSquare, Sparkles, Clock,
   Compass, Activity, User, Mail, MapPin, Globe, Shield, Save, CheckCircle2,
-  XCircle, RefreshCw, Star, ArrowRight, ClipboardList
+  XCircle, RefreshCw, Star, ArrowRight, ClipboardList, TrendingUp
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
@@ -97,11 +98,13 @@ export function UserDashboard() {
   const [sessions, setSessions] = useState<SessionBooking[]>([])
   const [approvedPractitioners, setApprovedPractitioners] = useState<Profile[]>([])
   const [selectedSpecialization, setSelectedSpecialization] = useState<string>('')
-  const [activeTab, setActiveTab] = useState<'overview' | 'sessions' | 'profile'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'sessions' | 'activity' | 'profile'>('overview')
   const [isEditing, setIsEditing] = useState(false)
   const [updateLoading, setUpdateLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [editForm, setEditForm] = useState<EditProfileForm>({})
+  const [analyticsData, setAnalyticsData] = useState<PatientAnalytics | null>(null)
+  const [analyticsLoading, setAnalyticsLoading] = useState(true)
 
   const filteredPractitioners = selectedSpecialization
     ? approvedPractitioners.filter((p) => p.specialization === selectedSpecialization)
@@ -129,12 +132,24 @@ export function UserDashboard() {
 
         const userSessions = await api.getClientSessions(userProfile.id)
         setSessions(userSessions)
+        fetchAnalytics(userProfile.id)
       }
       // Fetch only approved practitioners for patient view
       const practitioners = await api.getApprovedPractitioners()
       setApprovedPractitioners(practitioners)
     } catch (err) {
       console.error(err)
+    }
+  }
+
+  const fetchAnalytics = async (userId: number) => {
+    try {
+      const data = await api.getPatientAnalytics(userId)
+      setAnalyticsData(data)
+    } catch (err) {
+      console.error('Failed to fetch patient analytics:', err)
+    } finally {
+      setAnalyticsLoading(false)
     }
   }
 
@@ -178,6 +193,7 @@ export function UserDashboard() {
         sidebarItems={[
           { label: 'Dashboard', active: activeTab === 'overview', path: '#', onClick: () => setActiveTab('overview'), icon: <LayoutDashboard size={20} /> },
           { label: 'Sessions', active: activeTab === 'sessions', path: '#', onClick: () => setActiveTab('sessions'), icon: <Calendar size={20} /> },
+          { label: 'My Activity', active: activeTab === 'activity', path: '#', onClick: () => setActiveTab('activity'), icon: <TrendingUp size={20} /> },
           { label: 'Marketplace', path: '/marketplace', icon: <Compass size={20} /> },
           { label: 'Products', path: '/products', icon: <ShoppingBag size={20} /> },
           { label: 'Product Orders', path: '/product-orders', icon: <ClipboardList size={20} /> },
@@ -506,6 +522,15 @@ export function UserDashboard() {
                   )}
                 </div>
               </section>
+            </motion.div>
+          ) : activeTab === 'activity' ? (
+            <motion.div
+              key="activity"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+            >
+              <PatientActivity data={analyticsData} loading={analyticsLoading} />
             </motion.div>
           ) : (
             /* Profile Tab */

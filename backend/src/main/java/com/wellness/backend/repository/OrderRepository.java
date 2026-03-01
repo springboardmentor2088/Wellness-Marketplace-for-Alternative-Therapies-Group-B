@@ -18,4 +18,20 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
     // Keeping these for internal use if needed, or I can remove them if they
     // conflict
     List<OrderEntity> findByUser_Id(Long userId);
+
+    @Query("SELECT SUM(o.totalPrice) FROM OrderEntity o WHERE o.product.provider.id = :providerId AND o.status <> 'CANCELLED' AND o.orderDate >= :start AND o.orderDate < :end")
+    java.math.BigDecimal sumProductRevenueByProviderAndDateRange(Long providerId, java.time.LocalDateTime start,
+            java.time.LocalDateTime end);
+
+    @Query("SELECT SUM(o.totalPrice) FROM OrderEntity o WHERE o.product.provider.id = :providerId AND o.status <> 'CANCELLED'")
+    java.math.BigDecimal sumTotalProductRevenueByProvider(Long providerId);
+
+    @Query("SELECT SUM(o.totalPrice) FROM OrderEntity o WHERE o.user.id = :userId AND o.status <> 'CANCELLED'")
+    java.math.BigDecimal sumTotalProductSpentByPatient(Long userId);
+
+    @Query("SELECT SUM(o.totalPrice) FROM OrderEntity o WHERE o.user.id = :userId AND o.status <> 'CANCELLED' AND o.orderDate >= :start AND o.orderDate < :end")
+    java.math.BigDecimal sumProductSpentByPatientAndDateRange(Long userId, java.time.LocalDateTime start,
+            java.time.LocalDateTime end);
+
+    List<OrderEntity> findTop5ByUser_IdOrderByOrderDateDesc(Long userId);
 }

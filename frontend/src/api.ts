@@ -38,10 +38,12 @@ export interface Profile {
 export interface Booking {
   id?: number
   userId: number
+  clientName?: string
   practitionerId: number
   bookingDate?: string
-  status: 'PENDING' | 'CONFIRMED' | 'CANCELLED'
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'RESCHEDULED' | 'CONFIRMED' | 'CANCELLED'
   notes?: string
+  sessionFee?: number
 }
 
 export interface BookingRequest {
@@ -112,6 +114,43 @@ export interface Notification {
   read: boolean
   relatedBookingId?: number
   createdAt: string
+}
+
+export interface PractitionerAnalytics {
+  dailyRevenue: number;
+  weeklyRevenue: number;
+  monthlyRevenue: number;
+  yearlyRevenue: number;
+  allTimeRevenue: number;
+
+  dailyGrowthPercent: number;
+  weeklyGrowthPercent: number;
+  monthlyGrowthPercent: number;
+  yearlyGrowthPercent: number;
+
+  sessionRevenueDaily: number;
+  productRevenueDaily: number;
+  sessionRevenueMonthly: number;
+  productRevenueMonthly: number;
+  sessionRevenueAllTime: number;
+  productRevenueAllTime: number;
+
+  totalSessionRevenue: number;
+  totalProductRevenue: number;
+  accumulatedRevenue: number;
+}
+
+export interface PatientAnalytics {
+  sessionsAttended: number;
+  totalSessionSpent: number;
+  totalProductSpent: number;
+  totalSpent: number;
+
+  monthlySpent: number;
+  yearlySpent: number;
+
+  recentSessions: Booking[];
+  recentOrders: Order[];
 }
 
 const apiClient = axios.create({ baseURL: API_BASE, withCredentials: true })
@@ -369,6 +408,17 @@ export const api = {
 
   async forgotPassword(email: string): Promise<{ message: string }> {
     const response = await apiClient.post('/auth/forgot-password', { email })
+    return response.data
+  },
+
+  // Analytics
+  async getPractitionerAnalytics(id: number): Promise<PractitionerAnalytics> {
+    const response = await apiClient.get(`/analytics/practitioner/${id}`)
+    return response.data
+  },
+
+  async getPatientAnalytics(id: number): Promise<PatientAnalytics> {
+    const response = await apiClient.get(`/analytics/patient/${id}`)
     return response.data
   }
 }

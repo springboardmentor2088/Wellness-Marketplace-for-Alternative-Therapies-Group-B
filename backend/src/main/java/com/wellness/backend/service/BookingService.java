@@ -125,6 +125,7 @@ public class BookingService {
         dto.setBookingDate(entity.getBookingDate());
         dto.setNotes(entity.getNotes());
         dto.setStatus(entity.getStatus() != null ? entity.getStatus().name() : null);
+        dto.setSessionFee(entity.getSessionFee());
         return dto;
     }
 }

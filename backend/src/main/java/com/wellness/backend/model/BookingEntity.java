@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class BookingEntity {
 
     @Id
@@ -31,7 +31,7 @@ public class BookingEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "practitioner_id", nullable = false)
-    @JsonIgnoreProperties({"password", "bookings", "hibernateLazyInitializer", "handler"})
+    @JsonIgnoreProperties({ "password", "bookings", "hibernateLazyInitializer", "handler" })
     private UserEntity practitioner;
 
     @Enumerated(EnumType.STRING)
@@ -40,7 +40,7 @@ public class BookingEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    @JsonIgnoreProperties({"password", "bookings", "hibernateLazyInitializer", "handler"})
+    @JsonIgnoreProperties({ "password", "bookings", "hibernateLazyInitializer", "handler" })
     private UserEntity user;
 
     @CreationTimestamp
@@ -49,4 +49,7 @@ public class BookingEntity {
 
     @Column(name = "reminder_sent", nullable = false)
     private boolean reminderSent = false;
+
+    @Column(name = "session_fee", precision = 19, scale = 2)
+    private java.math.BigDecimal sessionFee;
 }

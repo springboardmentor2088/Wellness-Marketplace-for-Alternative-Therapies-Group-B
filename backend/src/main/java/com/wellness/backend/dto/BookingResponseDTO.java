@@ -12,4 +12,5 @@ public class BookingResponseDTO {
     private LocalDateTime bookingDate;
     private String notes;
     private String status;
+    private java.math.BigDecimal sessionFee;
 }

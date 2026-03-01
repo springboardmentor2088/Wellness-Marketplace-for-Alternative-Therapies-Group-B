@@ -21,6 +21,7 @@ import { SPECIALIZATIONS } from '../constants/specializations';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { SessionCalendar } from '../components/SessionCalendar';
 import { SessionReminderBanner } from '../components/SessionReminderBanner';
+import { PractitionerAnalytics } from '../components/PractitionerAnalytics';
 import {
   CheckCircle2, XCircle, FileText, Calendar, User, LayoutDashboard,
   CloudUpload, ArrowRight, ShieldCheck, Activity, Globe, MessageSquare, RefreshCw, AlertCircle,
@@ -130,7 +131,7 @@ export function PractitionerDashboard() {
   const [loading, setLoading] = useState(false);
   const [degreeFile, setDegreeFile] = useState<File | null>(null);
   const [message, setMessage] = useState('');
-  const [activeTab, setActiveTab] = useState<'overview' | 'requests' | 'sessions' | 'calendar' | 'profile' | 'verification'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'requests' | 'sessions' | 'calendar' | 'analytics' | 'profile' | 'verification'>('overview');
   const [editForm, setEditForm] = useState<Partial<Profile>>({});
   const [rescheduleSession, setRescheduleSession] = useState<SessionBooking | null>(null);
   const [rescheduleDate, setRescheduleDate] = useState<string>('');
@@ -141,12 +142,15 @@ export function PractitionerDashboard() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [stats, setStats] = useState<PractitionerStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
 
   const sidebarItems = [
     { label: 'Overview', onClick: () => setActiveTab('overview'), active: activeTab === 'overview', icon: <LayoutDashboard size={20} /> },
     { label: 'Booking Requests', onClick: () => setActiveTab('requests'), active: activeTab === 'requests', icon: <Calendar size={20} /> },
     { label: 'Session History', onClick: () => setActiveTab('sessions'), active: activeTab === 'sessions', icon: <ClipboardList size={20} /> },
     { label: 'Calendar', onClick: () => setActiveTab('calendar'), active: activeTab === 'calendar', icon: <Calendar size={20} /> },
+    { label: 'Analytics', onClick: () => setActiveTab('analytics'), active: activeTab === 'analytics', icon: <TrendingUp size={20} /> },
     { label: 'Marketplace', path: '/marketplace', icon: <Globe size={20} /> },
     { label: 'My Products', path: '/my-products', icon: <Package size={20} /> },
     { label: 'Product Orders', path: '/product-orders', icon: <ClipboardList size={20} /> },
@@ -180,6 +184,7 @@ export function PractitionerDashboard() {
         const sessionRes = await api.getProviderSessions(res.id);
         setSessions(sessionRes);
         fetchStats(res.id);
+        fetchAnalytics(res.id);
       }
     } catch (err) {
       console.error(err);
@@ -194,6 +199,17 @@ export function PractitionerDashboard() {
       console.error('Failed to fetch stats:', err);
     } finally {
       setStatsLoading(false);
+    }
+  };
+
+  const fetchAnalytics = async (providerId: number) => {
+    try {
+      const data = await api.getPractitionerAnalytics(providerId);
+      setAnalyticsData(data);
+    } catch (err) {
+      console.error('Failed to fetch analytics:', err);
+    } finally {
+      setAnalyticsLoading(false);
     }
   };
 
@@ -801,6 +817,12 @@ export function PractitionerDashboard() {
                     )}
                   </div>
                 </section>
+              </motion.div>
+            )}
+
+            {activeTab === 'analytics' && (
+              <motion.div key="analytics" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <PractitionerAnalytics data={analyticsData} loading={analyticsLoading} />
               </motion.div>
             )}
 
