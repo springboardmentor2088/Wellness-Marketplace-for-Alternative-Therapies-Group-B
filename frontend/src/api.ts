@@ -287,6 +287,16 @@ export const api = {
     return response.data
   },
 
+  async cancelBooking(id: number): Promise<Booking> {
+    const response = await apiClient.put(`/bookings/${id}/cancel`)
+    return response.data
+  },
+
+  async acceptRescheduleBooking(id: number): Promise<Booking> {
+    const response = await apiClient.put(`/bookings/${id}/accept-reschedule`)
+    return response.data
+  },
+
   async getAllPractitioners(): Promise<Profile[]> {
     const response = await apiClient.get('/user/all-practitioners')
     return response.data

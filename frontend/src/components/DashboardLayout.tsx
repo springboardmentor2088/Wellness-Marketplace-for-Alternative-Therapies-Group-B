@@ -6,9 +6,10 @@ import { formatImageUrl } from '../utils/image'
 type DashboardLayoutProps = {
   sidebarItems: { label: string; path?: string; active?: boolean; icon: ReactNode; onClick?: () => void }[]
   children: ReactNode
+  headerContent?: ReactNode
 }
 
-export function DashboardLayout({ sidebarItems, children }: DashboardLayoutProps) {
+export function DashboardLayout({ sidebarItems, children, headerContent }: DashboardLayoutProps) {
   const navigate = useNavigate()
   const userName = localStorage.getItem('userName') || 'Guest'
   const profileImage = localStorage.getItem('profileImage') || undefined
@@ -83,6 +84,7 @@ export function DashboardLayout({ sidebarItems, children }: DashboardLayoutProps
           </div>
 
           <div className="flex items-center gap-6">
+            {headerContent}
             <div className="relative group cursor-pointer p-2 rounded-xl border border-slate-100 hover:bg-slate-50 transition-all">
               <Bell size={20} className="text-slate-400 group-hover:text-brand-600" />
               <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>

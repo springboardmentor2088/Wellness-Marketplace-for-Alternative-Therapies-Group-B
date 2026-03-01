@@ -139,7 +139,7 @@ public class AnalyticsService {
                 LocalDateTime yearStart = now.with(TemporalAdjusters.firstDayOfYear()).with(LocalTime.MIN);
 
                 long sessionsAttended = bookingRepository.countByUser_IdAndStatusIn(userId,
-                                List.of(BookingStatus.ACCEPTED, BookingStatus.CONFIRMED));
+                                List.of(BookingStatus.ACCEPTED, BookingStatus.CONFIRMED, BookingStatus.COMPLETED));
                 BigDecimal totalSessionSpent = orZero(bookingRepository.sumTotalSessionSpentByPatient(userId));
                 BigDecimal totalProductSpent = orZero(orderRepository.sumTotalProductSpentByPatient(userId));
                 BigDecimal totalSpent = totalSessionSpent.add(totalProductSpent);

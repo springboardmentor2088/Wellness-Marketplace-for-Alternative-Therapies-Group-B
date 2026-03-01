@@ -99,7 +99,7 @@ public class OrderService {
 
                 String productImg = order.getProduct().getImageUrl();
                 if (productImg != null && !productImg.startsWith("http")) {
-                        productImg = "http://localhost:8080/uploads/" + productImg;
+                        productImg = "http://localhost:8080/" + productImg;
                 }
 
                 return OrderDTO.builder()

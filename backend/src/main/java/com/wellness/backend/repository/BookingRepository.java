@@ -26,20 +26,22 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
 
     boolean existsByPractitioner_IdAndBookingDate(Long practitionerId, LocalDateTime bookingDate);
 
-    @Query("SELECT SUM(b.sessionFee) FROM BookingEntity b WHERE b.practitioner.id = :practitionerId AND b.status IN (com.wellness.backend.model.BookingStatus.ACCEPTED, com.wellness.backend.model.BookingStatus.CONFIRMED) AND b.bookingDate >= :start AND b.bookingDate < :end")
+    @Query("SELECT SUM(b.sessionFee) FROM BookingEntity b WHERE b.practitioner.id = :practitionerId AND b.status IN (com.wellness.backend.model.BookingStatus.ACCEPTED, com.wellness.backend.model.BookingStatus.CONFIRMED, com.wellness.backend.model.BookingStatus.COMPLETED) AND b.bookingDate >= :start AND b.bookingDate < :end")
     java.math.BigDecimal sumSessionRevenueByPractitionerAndDateRange(Long practitionerId, LocalDateTime start,
             LocalDateTime end);
 
-    @Query("SELECT SUM(b.sessionFee) FROM BookingEntity b WHERE b.practitioner.id = :practitionerId AND b.status IN (com.wellness.backend.model.BookingStatus.ACCEPTED, com.wellness.backend.model.BookingStatus.CONFIRMED)")
+    @Query("SELECT SUM(b.sessionFee) FROM BookingEntity b WHERE b.practitioner.id = :practitionerId AND b.status IN (com.wellness.backend.model.BookingStatus.ACCEPTED, com.wellness.backend.model.BookingStatus.CONFIRMED, com.wellness.backend.model.BookingStatus.COMPLETED)")
     java.math.BigDecimal sumTotalSessionRevenueByPractitioner(Long practitionerId);
 
-    @Query("SELECT SUM(b.sessionFee) FROM BookingEntity b WHERE b.user.id = :userId AND b.status IN (com.wellness.backend.model.BookingStatus.ACCEPTED, com.wellness.backend.model.BookingStatus.CONFIRMED)")
+    @Query("SELECT SUM(b.sessionFee) FROM BookingEntity b WHERE b.user.id = :userId AND b.status IN (com.wellness.backend.model.BookingStatus.ACCEPTED, com.wellness.backend.model.BookingStatus.CONFIRMED, com.wellness.backend.model.BookingStatus.COMPLETED)")
     java.math.BigDecimal sumTotalSessionSpentByPatient(Long userId);
 
-    @Query("SELECT SUM(b.sessionFee) FROM BookingEntity b WHERE b.user.id = :userId AND b.status IN (com.wellness.backend.model.BookingStatus.ACCEPTED, com.wellness.backend.model.BookingStatus.CONFIRMED) AND b.bookingDate >= :start AND b.bookingDate < :end")
+    @Query("SELECT SUM(b.sessionFee) FROM BookingEntity b WHERE b.user.id = :userId AND b.status IN (com.wellness.backend.model.BookingStatus.ACCEPTED, com.wellness.backend.model.BookingStatus.CONFIRMED, com.wellness.backend.model.BookingStatus.COMPLETED) AND b.bookingDate >= :start AND b.bookingDate < :end")
     java.math.BigDecimal sumSessionSpentByPatientAndDateRange(Long userId, LocalDateTime start, LocalDateTime end);
 
     long countByUser_IdAndStatusIn(Long userId, List<com.wellness.backend.model.BookingStatus> statuses);
+
+    List<BookingEntity> findByStatusAndReminderSentFalse(BookingStatus status);
 
     List<BookingEntity> findTop5ByUser_IdOrderByBookingDateDesc(Long userId);
 }

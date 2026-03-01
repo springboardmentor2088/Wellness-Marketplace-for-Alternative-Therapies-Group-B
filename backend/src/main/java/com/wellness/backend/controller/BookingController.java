@@ -74,4 +74,14 @@ public class BookingController {
     public ResponseEntity<BookingResponseDTO> completeBooking(@PathVariable Long id) {
         return ResponseEntity.ok(bookingService.completeBooking(id));
     }
+
+    @PutMapping("/{id}/cancel")
+    public ResponseEntity<BookingResponseDTO> cancelBooking(@PathVariable Long id) {
+        return ResponseEntity.ok(bookingService.cancelBooking(id));
+    }
+
+    @PutMapping("/{id}/accept-reschedule")
+    public ResponseEntity<BookingResponseDTO> acceptReschedule(@PathVariable Long id) {
+        return ResponseEntity.ok(bookingService.acceptReschedule(id));
+    }
 }

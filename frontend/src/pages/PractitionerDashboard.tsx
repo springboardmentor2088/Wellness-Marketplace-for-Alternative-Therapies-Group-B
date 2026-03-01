@@ -590,6 +590,7 @@ export function PractitionerDashboard() {
                             <th className="pb-6 text-[10px] font-black uppercase tracking-widest text-slate-400 pl-4">Client Name</th>
                             <th className="pb-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Session Date</th>
                             <th className="pb-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Time / Duration</th>
+                            <th className="pb-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Session Fee</th>
                             <th className="pb-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Issue Description</th>
                             <th className="pb-6 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right pr-4">Actions</th>
                           </tr>
@@ -622,6 +623,15 @@ export function PractitionerDashboard() {
                                 <td className="py-6 text-sm font-bold text-slate-600">
                                   {request.startTime ? request.startTime : 'N/A'}
                                   {request.duration ? <span className="block text-xs text-slate-400 font-medium">{request.duration} mins</span> : ''}
+                                </td>
+                                <td className="py-6">
+                                  {request.sessionFee != null ? (
+                                    <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-xl text-xs font-black">
+                                      ₹ {Number(request.sessionFee).toLocaleString()}
+                                    </span>
+                                  ) : (
+                                    <span className="text-slate-400 text-xs font-medium">N/A</span>
+                                  )}
                                 </td>
                                 <td className="py-6 text-slate-500 text-xs font-medium max-w-[200px] truncate">
                                   {request.notes || 'No description provided'}
@@ -773,6 +783,7 @@ export function PractitionerDashboard() {
                             <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400 pl-4">Patient Details</th>
                             <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Date</th>
                             <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Time / Duration</th>
+                            <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Session Fee</th>
                             <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Status</th>
                             <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Comments</th>
                             <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right pr-4">Action</th>
@@ -807,6 +818,15 @@ export function PractitionerDashboard() {
                                   <td className="py-4 text-xs font-bold text-slate-600">
                                     {booking.startTime || 'N/A'}
                                     {booking.duration && <span className="block text-[10px] text-slate-400 font-medium">{booking.duration} mins</span>}
+                                  </td>
+                                  <td className="py-4">
+                                    {booking.sessionFee != null ? (
+                                      <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-xl text-xs font-black">
+                                        ₹ {Number(booking.sessionFee).toLocaleString()}
+                                      </span>
+                                    ) : (
+                                      <span className="text-slate-400 text-xs font-medium">N/A</span>
+                                    )}
                                   </td>
                                   <td className="py-4">
                                     <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${getSessionStatusClasses(status)}`}>

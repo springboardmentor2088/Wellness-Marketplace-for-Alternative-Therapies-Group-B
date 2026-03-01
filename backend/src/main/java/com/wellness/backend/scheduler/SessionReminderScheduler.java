@@ -10,11 +10,12 @@ import org.springframework.stereotype.Component;
 public class SessionReminderScheduler {
 
     private final SessionBookingService sessionBookingService;
+    private final com.wellness.backend.service.BookingService bookingService;
 
     // Runs every 5 minutes
     @Scheduled(fixedRate = 300_000)
     public void runSessionReminders() {
         sessionBookingService.processSessionReminders();
+        bookingService.processSessionReminders();
     }
 }
-

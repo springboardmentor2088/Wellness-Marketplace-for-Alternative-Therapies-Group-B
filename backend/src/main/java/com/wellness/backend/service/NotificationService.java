@@ -58,6 +58,39 @@ public class NotificationService {
     }
 
     @Transactional
+    public void notifyBookingAcceptedForClient(BookingEntity booking) {
+        UserEntity client = booking.getUser();
+        String practitionerName = booking.getPractitioner().getName();
+        String dateTime = booking.getBookingDate() != null
+                ? booking.getBookingDate().toLocalDate() + " at "
+                        + booking.getBookingDate().toLocalTime().toString().substring(0, 5)
+                : "scheduled time";
+        String message = String.format("✅ %s confirmed your session on %s", practitionerName, dateTime);
+        createNotification(client, NotificationType.SESSION_CONFIRMED, message, booking.getId());
+    }
+
+    @Transactional
+    public void notifyBookingRejectedForClient(BookingEntity booking) {
+        UserEntity client = booking.getUser();
+        String practitionerName = booking.getPractitioner().getName();
+        String message = String.format("❌ %s declined your session request", practitionerName);
+        createNotification(client, NotificationType.SESSION_REJECTED, message, booking.getId());
+    }
+
+    @Transactional
+    public void notifyBookingRescheduledForClient(BookingEntity booking) {
+        UserEntity client = booking.getUser();
+        String practitionerName = booking.getPractitioner().getName();
+        String newTime = booking.getBookingDate() != null
+                ? booking.getBookingDate().toLocalDate() + " at "
+                        + booking.getBookingDate().toLocalTime().toString().substring(0, 5)
+                : "a new time";
+        String message = String.format("🔄 %s suggested a new time: %s. Please log in to accept or decline.",
+                practitionerName, newTime);
+        createNotification(client, NotificationType.SESSION_RESCHEDULE_SUGGESTED, message, booking.getId());
+    }
+
+    @Transactional
     public void notifySessionConfirmedForClient(SessionBookingEntity session) {
         UserEntity client = session.getClient();
         String providerName = session.getProvider().getName();
@@ -66,8 +99,7 @@ public class NotificationService {
                 "Dr. %s has confirmed your session on %s at %s",
                 providerName,
                 session.getSessionDate(),
-                session.getStartTime()
-        );
+                session.getStartTime());
 
         createNotification(client, NotificationType.SESSION_CONFIRMED, message, session.getId());
     }
@@ -90,8 +122,7 @@ public class NotificationService {
                 "Dr. %s suggested a new time on %s at %s",
                 providerName,
                 session.getSessionDate(),
-                session.getStartTime()
-        );
+                session.getStartTime());
 
         createNotification(client, NotificationType.SESSION_RESCHEDULE_SUGGESTED, message, session.getId());
     }
@@ -104,16 +135,32 @@ public class NotificationService {
         String clientMessage = String.format(
                 "Reminder: your session with Dr. %s starts at %s",
                 provider.getName(),
-                session.getStartTime()
-        );
+                session.getStartTime());
         String providerMessage = String.format(
                 "Reminder: your session with %s starts at %s",
                 client.getName(),
-                session.getStartTime()
-        );
+                session.getStartTime());
 
         createNotification(client, NotificationType.SESSION_REMINDER, clientMessage, session.getId());
         createNotification(provider, NotificationType.SESSION_REMINDER, providerMessage, session.getId());
+    }
+
+    @Transactional
+    public void notifyBookingReminder(BookingEntity booking) {
+        UserEntity client = booking.getUser();
+        UserEntity practitioner = booking.getPractitioner();
+
+        String clientMessage = String.format(
+                "Reminder: your session with Dr. %s starts at %s",
+                practitioner.getName(),
+                booking.getBookingDate().toLocalTime().toString());
+        String practitionerMessage = String.format(
+                "Reminder: your session with %s starts at %s",
+                client.getName(),
+                booking.getBookingDate().toLocalTime().toString());
+
+        createNotification(client, NotificationType.SESSION_REMINDER, clientMessage, booking.getId());
+        createNotification(practitioner, NotificationType.SESSION_REMINDER, practitionerMessage, booking.getId());
     }
 
     private void createNotification(UserEntity recipient, NotificationType type, String message, Long relatedId) {
@@ -137,4 +184,3 @@ public class NotificationService {
         return dto;
     }
 }
-

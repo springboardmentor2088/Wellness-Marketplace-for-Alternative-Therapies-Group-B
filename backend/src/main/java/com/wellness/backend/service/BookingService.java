@@ -23,6 +23,7 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final EmailService emailService;
 
     public BookingResponseDTO createBooking(BookingRequestDTO request) {
         // Validate bookingDate is in the future
@@ -56,6 +57,11 @@ public class BookingService {
 
         BookingEntity saved = bookingRepository.save(booking);
         notificationService.notifyBookingRequest(saved);
+        // Email the patient confirming the booking request was received
+        try {
+            emailService.sendBookingReceivedToClient(saved);
+        } catch (Exception ignored) {
+        }
         return mapToResponseDTO(saved);
     }
 
@@ -90,14 +96,28 @@ public class BookingService {
         BookingEntity booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
         booking.setStatus(BookingStatus.ACCEPTED);
-        return mapToResponseDTO(bookingRepository.save(booking));
+        BookingEntity saved = bookingRepository.save(booking);
+        // Notify patient via in-app + email
+        notificationService.notifyBookingAcceptedForClient(saved);
+        try {
+            emailService.sendBookingConfirmedToClient(saved);
+        } catch (Exception ignored) {
+        }
+        return mapToResponseDTO(saved);
     }
 
     public BookingResponseDTO rejectBooking(Long id) {
         BookingEntity booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
         booking.setStatus(BookingStatus.REJECTED);
-        return mapToResponseDTO(bookingRepository.save(booking));
+        BookingEntity saved = bookingRepository.save(booking);
+        // Notify patient via in-app + email
+        notificationService.notifyBookingRejectedForClient(saved);
+        try {
+            emailService.sendBookingRejectedToClient(saved);
+        } catch (Exception ignored) {
+        }
+        return mapToResponseDTO(saved);
     }
 
     public BookingResponseDTO rescheduleBooking(Long id, String newSessionDate, String newStartTime) {
@@ -105,7 +125,6 @@ public class BookingService {
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
         booking.setStatus(BookingStatus.RESCHEDULED);
         try {
-            // Check if length is 5 e.g. "09:00", append ":00" to make it parseable
             String timeString = newStartTime;
             if (timeString != null && timeString.length() == 5) {
                 timeString += ":00";
@@ -115,7 +134,40 @@ public class BookingService {
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid date or time format. Expected yyyy-MM-dd and HH:mm");
         }
+        BookingEntity saved = bookingRepository.save(booking);
+        // Notify patient via in-app + email
+        notificationService.notifyBookingRescheduledForClient(saved);
+        try {
+            emailService.sendRescheduleSuggestedToClient(saved);
+        } catch (Exception ignored) {
+        }
+        return mapToResponseDTO(saved);
+    }
+
+    /** Patient cancels a pending/accepted booking */
+    public BookingResponseDTO cancelBooking(Long id) {
+        BookingEntity booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+        booking.setStatus(BookingStatus.CANCELLED);
         return mapToResponseDTO(bookingRepository.save(booking));
+    }
+
+    /** Patient accepts a reschedule suggested by the practitioner */
+    public BookingResponseDTO acceptReschedule(Long id) {
+        BookingEntity booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+        if (booking.getStatus() != BookingStatus.RESCHEDULED) {
+            throw new IllegalStateException("Booking is not in RESCHEDULED state");
+        }
+        booking.setStatus(BookingStatus.ACCEPTED);
+        BookingEntity saved = bookingRepository.save(booking);
+        // Notify patient of acceptance
+        notificationService.notifyBookingAcceptedForClient(saved);
+        try {
+            emailService.sendBookingConfirmedToClient(saved);
+        } catch (Exception ignored) {
+        }
+        return mapToResponseDTO(saved);
     }
 
     public BookingResponseDTO completeBooking(Long id) {
@@ -132,6 +184,49 @@ public class BookingService {
                 .filter(b -> b.getBookingDate().isBefore(now))
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Runs every 5 mins from scheduler. Sends reminders for sessions starting in
+     * 30-35 mins.
+     */
+    public void processSessionReminders() {
+        LocalDateTime now = LocalDateTime.now();
+        List<BookingEntity> candidates = bookingRepository
+                .findByStatusAndReminderSentFalse(BookingStatus.ACCEPTED);
+
+        for (BookingEntity booking : candidates) {
+            if (isWithinExact30MinuteWindow(booking, now)) {
+                try {
+                    sendReminderEmails(booking);
+                    notificationService.notifyBookingReminder(booking);
+                    booking.setReminderSent(true);
+                    bookingRepository.save(booking);
+                } catch (Exception e) {
+                    System.err
+                            .println("Failed to send reminder for booking " + booking.getId() + ": " + e.getMessage());
+                }
+            }
+        }
+    }
+
+    private boolean isWithinExact30MinuteWindow(BookingEntity booking, LocalDateTime now) {
+        LocalDateTime start = booking.getBookingDate();
+        if (start == null)
+            return false;
+        long minutesDiff = java.time.temporal.ChronoUnit.MINUTES.between(now, start);
+        return minutesDiff >= 30 && minutesDiff < 35;
+    }
+
+    private void sendReminderEmails(BookingEntity booking) {
+        try {
+            emailService.sendSessionReminderToClient(booking);
+        } catch (Exception ignored) {
+        }
+        try {
+            emailService.sendSessionReminderToProvider(booking);
+        } catch (Exception ignored) {
+        }
     }
 
     private BookingResponseDTO mapToResponseDTO(BookingEntity entity) {

@@ -5,7 +5,7 @@ import { DashboardLayout } from '../components/DashboardLayout'
 import { SessionCalendar } from '../components/SessionCalendar'
 import { SessionReminderBanner } from '../components/SessionReminderBanner'
 import { PatientActivity } from '../components/PatientActivity'
-import { api, type Profile, type Booking, type PatientAnalytics } from '../api'
+import { api, type Profile, type Booking, type PatientAnalytics, type Notification as AppNotification } from '../api'
 import {
   Calendar, LayoutDashboard, ShoppingBag, MessageSquare, Sparkles, Clock,
   Compass, Activity, User, Mail, MapPin, Globe, Shield, Save, CheckCircle2,
@@ -89,6 +89,10 @@ export function UserDashboard() {
   const [editForm, setEditForm] = useState<EditProfileForm>({})
   const [analyticsData, setAnalyticsData] = useState<PatientAnalytics | null>(null)
   const [analyticsLoading, setAnalyticsLoading] = useState(true)
+  const [notifications, setNotifications] = useState<AppNotification[]>([])
+  const [showNotifications, setShowNotifications] = useState(false)
+
+  const unreadCount = notifications.filter(n => !n.read).length
 
   const filteredPractitioners = selectedSpecialization
     ? approvedPractitioners.filter((p) => p.specialization === selectedSpecialization)
@@ -121,8 +125,37 @@ export function UserDashboard() {
       // Fetch only approved practitioners for patient view
       const practitioners = await api.getApprovedPractitioners()
       setApprovedPractitioners(practitioners)
+
+      const userNotifications = await api.getNotifications()
+      setNotifications(userNotifications)
     } catch (err) {
       console.error(err)
+    }
+  }
+
+  const markNotificationRead = async (id: number) => {
+    try {
+      await api.markNotificationRead(id)
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const handleBookingAction = async (bookingId: number, action: 'accept-reschedule' | 'cancel' | 'reject') => {
+    try {
+      if (action === 'accept-reschedule') {
+        await api.acceptRescheduleBooking(bookingId)
+        setMessage('Reschedule accepted successfully!')
+      } else if (action === 'cancel' || action === 'reject') {
+        await api.cancelBooking(bookingId)
+        setMessage(`Booking ${action === 'cancel' ? 'cancelled' : 'rejected'} successfully!`)
+      }
+      fetchData()
+      setTimeout(() => setMessage(''), 4000)
+    } catch (err) {
+      setMessage('Failed to update booking.')
+      setTimeout(() => setMessage(''), 4000)
     }
   }
 
@@ -183,6 +216,73 @@ export function UserDashboard() {
           { label: 'Product Orders', path: '/product-orders', icon: <ClipboardList size={20} /> },
           { label: 'Profile', active: activeTab === 'profile', path: '#', onClick: () => setActiveTab('profile'), icon: <User size={20} /> },
         ]}
+        headerContent={
+          <div className="relative">
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="p-3 bg-white rounded-2xl shadow-sm border border-slate-100 text-slate-400 hover:text-brand-600 transition-all relative group"
+            >
+              <Mail size={20} className={unreadCount > 0 ? "animate-pulse" : ""} />
+              {unreadCount > 0 && (
+                <span className="absolute top-2 right-2 h-4 w-4 bg-rose-500 border-2 border-white rounded-full text-[10px] font-black text-white flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+
+            <AnimatePresence>
+              {showNotifications && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowNotifications(false)}
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute right-0 mt-4 w-80 bg-white rounded-3xl shadow-2xl border border-slate-100 z-50 overflow-hidden"
+                  >
+                    <div className="p-5 border-b border-slate-50 flex items-center justify-between">
+                      <h3 className="font-black text-slate-900 text-sm uppercase tracking-widest">Notifications</h3>
+                      <span className="text-[10px] font-black bg-brand-50 text-brand-600 px-2 py-1 rounded-lg">{unreadCount} New</span>
+                    </div>
+                    <div className="max-h-96 overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <div className="p-10 text-center">
+                          <Mail className="mx-auto text-slate-200 mb-2" size={32} />
+                          <p className="text-xs font-bold text-slate-400">All caught up!</p>
+                        </div>
+                      ) : (
+                        notifications.map((n) => (
+                          <div
+                            key={n.id}
+                            onClick={() => !n.read && markNotificationRead(n.id)}
+                            className={`p-5 border-b border-slate-50 cursor-pointer hover:bg-slate-50 transition-colors ${!n.read ? 'bg-brand-50/30' : ''}`}
+                          >
+                            <div className="flex gap-3">
+                              <div className={`h-8 w-8 rounded-xl flex items-center justify-center flex-shrink-0 ${n.type === 'BOOKING_REQUEST' ? 'bg-amber-100 text-amber-600' :
+                                n.type === 'SESSION_CONFIRMED' ? 'bg-emerald-100 text-emerald-600' :
+                                  n.type === 'SESSION_REJECTED' ? 'bg-rose-100 text-rose-600' :
+                                    'bg-brand-100 text-brand-600'
+                                }`}>
+                                {n.type === 'BOOKING_REQUEST' ? <Calendar size={14} /> : <Activity size={14} />}
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-xs font-bold text-slate-900 leading-relaxed mb-1">{n.message}</p>
+                                <p className="text-[10px] font-medium text-slate-400">{new Date(n.createdAt).toLocaleDateString()} {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
+        }
       >
         <AnimatePresence mode="sync">
           {activeTab === 'overview' ? (
@@ -504,6 +604,122 @@ export function UserDashboard() {
               <section className="bg-white rounded-[3rem] border border-brand-100/50 p-10 shadow-xl shadow-brand-500/5">
                 <div className="flex items-center justify-between mb-8">
                   <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
+                    <Clock size={24} className="text-brand-600" /> Upcoming Sessions
+                  </h2>
+                  <Link to="/marketplace" className="text-xs font-black uppercase tracking-widest text-brand-600 hover:text-brand-700 flex items-center gap-1">
+                    Book New <ArrowRight size={12} />
+                  </Link>
+                </div>
+                <div className="space-y-4">
+                  {bookings.filter(b => !['COMPLETED', 'REJECTED', 'CANCELLED'].includes(b.status)).length > 0 ? (
+                    bookings
+                      .filter(b => !['COMPLETED', 'REJECTED', 'CANCELLED'].includes(b.status))
+                      .slice()
+                      .sort((a, b) => new Date(a.bookingDate).getTime() - new Date(b.bookingDate).getTime())
+                      .map((booking, idx) => {
+                        const statusColor =
+                          booking.status === 'ACCEPTED' || booking.status === 'CONFIRMED'
+                            ? 'border-emerald-200 text-emerald-700 bg-emerald-50'
+                            : booking.status === 'RESCHEDULED'
+                              ? 'border-sky-200 text-sky-700 bg-sky-50'
+                              : 'border-amber-200 text-amber-700 bg-amber-50'
+                        return (
+                          <motion.div
+                            key={booking.id ?? idx}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: idx * 0.04 }}
+                            className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-6 bg-slate-50/50 rounded-3xl border border-slate-100 hover:border-brand-200 hover:bg-white hover:shadow-lg hover:shadow-brand-500/5 transition-all"
+                          >
+                            <div className="flex items-center gap-5">
+                              <div className="h-12 w-12 rounded-2xl overflow-hidden bg-brand-50 border border-brand-100 flex-shrink-0">
+                                {booking.practitioner?.profileImage ? (
+                                  <img src={formatImageUrl(booking.practitioner.profileImage)} alt={booking.practitioner.fullName} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-brand-600 font-black text-lg bg-brand-50">
+                                    {booking.practitioner?.fullName?.[0] ?? 'P'}
+                                  </div>
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-black text-slate-900 leading-tight">
+                                  {booking.practitioner?.fullName || 'Practitioner'}
+                                </p>
+                                <p className="text-xs font-bold text-brand-600 uppercase tracking-wider mt-0.5">
+                                  {booking.practitioner?.specialization || 'Wellness Expert'}
+                                </p>
+                                <div className="flex items-center gap-2 mt-2">
+                                  <span className="text-xs text-slate-500 font-bold flex items-center gap-1 bg-white px-2.5 py-1 rounded-lg border border-slate-100 shadow-sm">
+                                    <Calendar size={11} className="text-brand-500" />
+                                    {formatDateToIndian(booking.bookingDate)}
+                                  </span>
+                                  {booking.startTime && (
+                                    <span className="text-xs text-slate-500 font-bold flex items-center gap-1 bg-white px-2.5 py-1 rounded-lg border border-slate-100 shadow-sm">
+                                      <Clock size={11} className="text-brand-500" /> {booking.startTime}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                              <span className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase border shadow-sm ${statusColor}`}>
+                                {booking.status}
+                              </span>
+                              {booking.sessionFee != null && Number(booking.sessionFee) > 0 && (
+                                <span className="text-xs font-black text-slate-500">
+                                  ₹ {Number(booking.sessionFee).toLocaleString()}
+                                </span>
+                              )}
+                              {booking.notes && (
+                                <p className="text-[10px] text-slate-400 font-medium italic max-w-[180px] text-right line-clamp-1">
+                                  "{booking.notes}"
+                                </p>
+                              )}
+                              {booking.status === 'RESCHEDULED' && (
+                                <div className="flex gap-2 mt-3">
+                                  <button
+                                    onClick={() => handleBookingAction(booking.id, 'accept-reschedule')}
+                                    className="px-3 py-1.5 bg-emerald-600 text-white text-[10px] font-black rounded-lg hover:bg-emerald-700 transition-all shadow-sm"
+                                  >
+                                    Accept
+                                  </button>
+                                  <button
+                                    onClick={() => handleBookingAction(booking.id, 'reject')}
+                                    className="px-3 py-1.5 bg-rose-50 text-rose-600 border border-rose-200 text-[10px] font-black rounded-lg hover:bg-rose-100 transition-all shadow-sm"
+                                  >
+                                    Reject
+                                  </button>
+                                </div>
+                              )}
+                              {(booking.status === 'PENDING' || booking.status === 'ACCEPTED' || booking.status === 'CONFIRMED') && (
+                                <button
+                                  onClick={() => handleBookingAction(booking.id, 'cancel')}
+                                  className="mt-3 px-3 py-1.5 bg-slate-50 text-slate-500 border border-slate-200 text-[10px] font-black rounded-lg hover:bg-slate-100 transition-all shadow-sm"
+                                >
+                                  Cancel Session
+                                </button>
+                              )}
+                            </div>
+                          </motion.div>
+                        )
+                      })
+                  ) : (
+                    <div className="py-10 text-center">
+                      <div className="bg-slate-50 inline-block p-6 rounded-full mb-4 border border-slate-100">
+                        <Calendar size={32} className="text-slate-300" />
+                      </div>
+                      <p className="text-slate-400 font-black uppercase tracking-widest text-xs">No upcoming sessions</p>
+                      <Link to="/marketplace" className="mt-3 inline-flex items-center gap-1 text-brand-600 font-black text-sm">
+                        Browse practitioners <ArrowRight size={13} />
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              <section className="bg-white rounded-[3rem] border border-brand-100/50 p-10 shadow-xl shadow-brand-500/5">
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
                     <Calendar size={24} className="text-brand-600" /> Past Sessions
                   </h2>
                 </div>
@@ -543,6 +759,11 @@ export function UserDashboard() {
                             <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase border shadow-sm ${getBookingStatusClasses('Completed')}`}>
                               COMPLETED
                             </span>
+                            {booking.sessionFee != null && Number(booking.sessionFee) > 0 && (
+                              <span className="text-xs font-black text-slate-500">
+                                ₹ {Number(booking.sessionFee).toLocaleString()} paid
+                              </span>
+                            )}
                           </div>
                         </motion.div>
                       ))
