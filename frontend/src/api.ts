@@ -61,16 +61,30 @@ export interface Product {
   createdAt?: string
 }
 
+export interface OrderRequest {
+  productId: number;
+  quantity: number;
+  totalPrice: number;
+}
+
 export interface Order {
-  orderId?: number
-  userId: number
-  productId: number
-  quantity: number
-  totalPrice: number
-  status?: string
-  deliveryStatus?: string
-  orderDate?: string
-  product?: Product
+  orderId?: number;
+  productName: string;
+  productImage?: string;
+  price: number;
+  quantity: number;
+  totalAmount: number;
+  orderDate: string;
+  deliveryDate: string;
+  deliveryStatus: string;
+  status: string;
+}
+
+export interface PractitionerStats {
+  totalOrders: number;
+  totalProductsSold: number;
+  totalRevenue: number;
+  monthlyRevenue: Record<string, number>;
 }
 
 export interface SessionBooking {
@@ -253,7 +267,7 @@ export const api = {
   },
 
   // Orders
-  async createOrder(data: Order): Promise<Order> {
+  async createOrder(data: OrderRequest): Promise<Order> {
     const response = await apiClient.post('/orders', data)
     return response.data
   },
@@ -265,6 +279,11 @@ export const api = {
 
   async getProviderOrders(providerId: number): Promise<Order[]> {
     const response = await apiClient.get(`/orders/provider/${providerId}`)
+    return response.data
+  },
+
+  async getPractitionerStats(providerId: number): Promise<PractitionerStats> {
+    const response = await apiClient.get(`/orders/practitioner/${providerId}/stats`)
     return response.data
   },
 

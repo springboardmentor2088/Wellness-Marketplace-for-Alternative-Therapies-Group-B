@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api, type Profile, type SessionBooking, type Notification } from '../api';
+import { api, type Profile, type SessionBooking, type Notification, type PractitionerStats } from '../api';
 
 export type Booking = {
   id?: number;
@@ -24,7 +24,7 @@ import { SessionReminderBanner } from '../components/SessionReminderBanner';
 import {
   CheckCircle2, XCircle, FileText, Calendar, User, LayoutDashboard,
   CloudUpload, ArrowRight, ShieldCheck, Activity, Globe, MessageSquare, RefreshCw, AlertCircle,
-  Package, ClipboardList, Bell
+  Package, ClipboardList, Bell, DollarSign, TrendingUp, ShoppingBag
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -76,6 +76,52 @@ const getSessionStatusClasses = (status: ReturnType<typeof getSessionStatus>) =>
   return 'bg-green-100 text-green-700'
 }
 
+function PractitionerRevenueStats({ stats, loading }: { stats: PractitionerStats | null, loading: boolean }) {
+  if (loading || !stats) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-32 bg-slate-50 animate-pulse rounded-[2.5rem] border border-slate-100"></div>
+        ))}
+      </div>
+    )
+  }
+
+  const cards = [
+    { label: 'Total Revenue', value: `₹ ${stats.totalRevenue.toLocaleString()}`, icon: <DollarSign size={20} />, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Orders Received', value: stats.totalOrders.toString(), icon: <ShoppingBag size={20} />, color: 'text-brand-600', bg: 'bg-brand-50' },
+    { label: 'Products Sold', value: stats.totalProductsSold.toString(), icon: <Package size={20} />, color: 'text-violet-600', bg: 'bg-violet-50' },
+    { label: 'Platform Growth', value: '+12.5%', icon: <TrendingUp size={20} />, color: 'text-amber-600', bg: 'bg-amber-50' },
+  ]
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+      {cards.map((card, idx) => (
+        <motion.div
+          key={idx}
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: idx * 0.1 }}
+          className="bg-white p-8 rounded-[2.5rem] border border-brand-100/50 shadow-xl shadow-brand-500/5 flex flex-col justify-between group hover:border-brand-300 transition-all"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className={`p-4 rounded-2xl ${card.bg} ${card.color} transition-transform group-hover:scale-110`}>
+              {card.icon}
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{card.label}</span>
+          </div>
+          <div>
+            <p className="text-3xl font-black text-slate-900 mb-1">{card.value}</p>
+            <div className="flex items-center gap-1.5 text-emerald-500 text-[10px] font-black">
+              <TrendingUp size={12} /> +2.4% vs last mo
+            </div>
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  )
+}
+
 export function PractitionerDashboard() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -93,6 +139,8 @@ export function PractitionerDashboard() {
   const [rescheduleMessage, setRescheduleMessage] = useState<string>('');
   const [sessionActionLoadingId, setSessionActionLoadingId] = useState<number | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [stats, setStats] = useState<PractitionerStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
 
   const sidebarItems = [
     { label: 'Overview', onClick: () => setActiveTab('overview'), active: activeTab === 'overview', icon: <LayoutDashboard size={20} /> },
@@ -131,9 +179,21 @@ export function PractitionerDashboard() {
         setBookings(bookingRes);
         const sessionRes = await api.getProviderSessions(res.id);
         setSessions(sessionRes);
+        fetchStats(res.id);
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const fetchStats = async (providerId: number) => {
+    try {
+      const data = await api.getPractitionerStats(providerId);
+      setStats(data);
+    } catch (err) {
+      console.error('Failed to fetch stats:', err);
+    } finally {
+      setStatsLoading(false);
     }
   };
 
@@ -416,6 +476,7 @@ export function PractitionerDashboard() {
             {/* Overview Tab */}
             {activeTab === 'overview' && (
               <motion.div key="overview" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <PractitionerRevenueStats stats={stats} loading={statsLoading} />
                 <section className="bg-white p-10 rounded-[3rem] border border-brand-100/50 shadow-xl shadow-brand-500/5">
                   <div className="flex items-center justify-between mb-10">
                     <h3 className="text-2xl font-black flex items-center gap-3 text-slate-900">

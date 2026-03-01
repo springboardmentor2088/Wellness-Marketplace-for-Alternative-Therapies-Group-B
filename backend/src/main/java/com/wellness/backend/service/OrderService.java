@@ -1,7 +1,8 @@
 package com.wellness.backend.service;
 
+import com.wellness.backend.dto.OrderDTO;
 import com.wellness.backend.dto.OrderRequestDTO;
-import com.wellness.backend.dto.OrderResponseDTO;
+import com.wellness.backend.dto.PractitionerStatsDTO;
 import com.wellness.backend.exception.ResourceNotFoundException;
 import com.wellness.backend.model.OrderEntity;
 import com.wellness.backend.model.ProductEntity;
@@ -14,7 +15,11 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.TextStyle;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,19 +30,19 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
 
-    public List<OrderResponseDTO> getOrdersByUserId(Long userId) {
+    public List<OrderDTO> getOrdersByUserId(Long userId) {
         return orderRepository.findByUser_Id(userId).stream()
-                .map(this::toResponseDto)
+                .map(this::toOrderDto)
                 .collect(Collectors.toList());
     }
 
-    public List<OrderResponseDTO> getOrdersByProviderId(Long providerId) {
+    public List<OrderDTO> getOrdersByProviderId(Long providerId) {
         return orderRepository.findByProductProviderId(providerId).stream()
-                .map(this::toResponseDto)
+                .map(this::toOrderDto)
                 .collect(Collectors.toList());
     }
 
-    public OrderResponseDTO createOrder(String userEmail, OrderRequestDTO request) {
+    public OrderDTO createOrder(String userEmail, OrderRequestDTO request) {
         UserEntity user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userEmail));
 
@@ -58,19 +63,49 @@ public class OrderService {
 
         OrderEntity savedOrder = orderRepository.save(order);
 
-        return toResponseDto(savedOrder);
+        return toOrderDto(savedOrder);
     }
 
-    private OrderResponseDTO toResponseDto(OrderEntity order) {
-        return OrderResponseDTO.builder()
+    public PractitionerStatsDTO getPractitionerStats(Long providerId) {
+        List<OrderEntity> orders = orderRepository.findByProductProviderId(providerId);
+
+        long totalOrders = orders.size();
+        long totalProductsSold = orders.stream().mapToLong(OrderEntity::getQuantity).sum();
+        double totalRevenue = orders.stream()
+                .mapToDouble(o -> o.getTotalPrice().doubleValue())
+                .sum();
+
+        // Monthly revenue for the last 6 months (simplification or using order dates)
+        Map<String, Double> monthlyRevenue = orders.stream()
+                .collect(Collectors.groupingBy(
+                        o -> o.getOrderDate().getMonth().getDisplayName(TextStyle.SHORT, Locale.ENGLISH),
+                        LinkedHashMap::new,
+                        Collectors.summingDouble(o -> o.getTotalPrice().doubleValue())));
+
+        return PractitionerStatsDTO.builder()
+                .totalOrders(totalOrders)
+                .totalProductsSold(totalProductsSold)
+                .totalRevenue(totalRevenue)
+                .monthlyRevenue(monthlyRevenue)
+                .build();
+    }
+
+    private OrderDTO toOrderDto(OrderEntity order) {
+        LocalDateTime createdAt = order.getCreatedAt() != null ? order.getCreatedAt() : order.getOrderDate();
+        LocalDateTime deliveryDate = createdAt.plusDays(3);
+        String deliveryStatus = LocalDateTime.now().isAfter(deliveryDate) ? "DELIVERED" : "PROCESSING";
+
+        return OrderDTO.builder()
                 .orderId(order.getOrderId())
-                .userEmail(order.getUser().getEmail())
                 .productName(order.getProduct().getName())
+                .productImage(order.getProduct().getImageUrl())
+                .price(order.getProduct().getPrice().doubleValue())
                 .quantity(order.getQuantity())
-                .totalPrice(order.getTotalPrice())
+                .totalAmount(order.getTotalPrice().doubleValue())
                 .orderDate(order.getOrderDate())
+                .deliveryDate(deliveryDate)
+                .deliveryStatus(deliveryStatus)
                 .status(order.getStatus())
-                .deliveryStatus(order.getDeliveryStatus())
                 .build();
     }
 }
