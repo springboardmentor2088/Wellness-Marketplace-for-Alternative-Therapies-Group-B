@@ -61,4 +61,13 @@ public class BookingEntity {
 
     @Column(name = "practitioner_comment", length = 500)
     private String practitionerComment;
+
+    @Column(name = "reminder_scheduled", nullable = false)
+    private boolean reminderScheduled = false;
+
+    @Column(name = "reminder_scheduled_at")
+    private LocalDateTime reminderScheduledAt;
+
+    @Column(name = "provider_message_id")
+    private String providerMessageId;
 }

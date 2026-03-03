@@ -201,7 +201,25 @@ public class NotificationService {
         createNotification(provider, NotificationType.SESSION_NOT_COMPLETED, message, session.getId());
     }
 
+    @Transactional
+    public void notifySessionCompleted(SessionBookingEntity session) {
+        UserEntity client = session.getClient();
+        UserEntity provider = session.getProvider();
+
+        String message = String.format(
+                "✅ Your session on %s at %s has been marked as COMPLETED. We hope it was productive!",
+                session.getSessionDate(), session.getStartTime());
+
+        createNotification(client, NotificationType.SESSION_COMPLETED, message, session.getId());
+        createNotification(provider, NotificationType.SESSION_COMPLETED, message, session.getId());
+    }
+
     private void createNotification(UserEntity recipient, NotificationType type, String message, Long relatedId) {
+        // Prevent duplicate notifications for the same event and recipient
+        if (notificationRepository.existsByRecipient_IdAndTypeAndRelatedBookingId(recipient.getId(), type, relatedId)) {
+            return;
+        }
+
         NotificationEntity entity = new NotificationEntity();
         entity.setRecipient(recipient);
         entity.setType(type);

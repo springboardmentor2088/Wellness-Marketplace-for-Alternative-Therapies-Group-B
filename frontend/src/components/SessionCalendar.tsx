@@ -12,6 +12,7 @@ interface SessionCalendarProps {
 interface DayInfo {
   date: string
   count: number
+  statuses: string[]
 }
 
 const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -55,18 +56,16 @@ export function SessionCalendar({ sessions, role, onDaySelect }: SessionCalendar
       if (!s.sessionDate) return
       const key = toLocalDateKey(String(s.sessionDate))
       if (!map[key]) {
-        map[key] = { date: key, count: 0 }
+        map[key] = { date: key, count: 0, statuses: [] }
       }
       map[key].count += 1
+      if (s.status) {
+        map[key].statuses.push(s.status)
+      }
     })
     return map
   }, [sessions])
 
-  // Both roles: 0 sessions → green, 1+ sessions → red
-  const getColorForCount = (count: number) => {
-    if (count === 0) return 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-white hover:border-brand-200'
-    return 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100/50'
-  }
 
   const selectedSessions = selectedDate
     ? sessions.filter((s) => toLocalDateKey(String(s.sessionDate)) === selectedDate)
@@ -137,9 +136,28 @@ export function SessionCalendar({ sessions, role, onDaySelect }: SessionCalendar
               const baseClasses =
                 'relative flex flex-col items-center justify-center aspect-square rounded-2xl border text-xs font-bold cursor-pointer transition-all'
 
-              const colorClasses = info
-                ? getColorForCount(info.count)
-                : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-white hover:border-brand-200'
+              const isPast = dateStr < todayStr
+
+              const getColor = () => {
+                if (!info || info.count === 0) {
+                  return 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-white hover:border-brand-200'
+                }
+
+                if (isPast) {
+                  const hasIssues = info.statuses.some(s => s === 'NOT_COMPLETED' || s === 'PENDING_COMPLETION_ACTION')
+                  if (hasIssues) {
+                    return 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100/50'
+                  }
+                  const allCompleted = info.statuses.every(s => s === 'COMPLETED')
+                  if (allCompleted) {
+                    return 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-white hover:border-brand-200'
+                  }
+                }
+
+                return 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100/50'
+              }
+
+              const colorClasses = getColor()
 
               return (
                 <button
@@ -173,6 +191,10 @@ export function SessionCalendar({ sessions, role, onDaySelect }: SessionCalendar
             <div className="flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
               <span>Session booked</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+              <span>Action Required</span>
             </div>
           </div>
         </div>

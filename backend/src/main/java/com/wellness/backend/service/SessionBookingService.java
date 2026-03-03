@@ -191,6 +191,7 @@ public class SessionBookingService {
 
         SessionBookingEntity saved = sessionBookingRepository.save(session);
         notificationService.notifySessionConfirmedForClient(saved);
+        scheduleSessionReminders(saved);
         return toDto(saved);
     }
 
@@ -239,12 +240,17 @@ public class SessionBookingService {
     public SessionBookingResponseDTO completeSession(Long sessionId, String providerEmail) {
         SessionBookingEntity session = loadAndValidateProviderOwnership(sessionId, providerEmail);
 
-        if (session.getStatus() == SessionStatus.COMPLETED || session.getStatus() == SessionStatus.NOT_COMPLETED) {
-            throw new IllegalStateException("Session is already in a terminal state: " + session.getStatus());
+        if (session.getStatus() != SessionStatus.PENDING_COMPLETION_ACTION) {
+            throw new IllegalStateException(
+                    "Session can only be completed if it is in PENDING_COMPLETION_ACTION state. Current status: "
+                            + session.getStatus());
         }
 
         session.setStatus(SessionStatus.COMPLETED);
         SessionBookingEntity saved = sessionBookingRepository.save(session);
+
+        // Notify both parties
+        notificationService.notifySessionCompleted(saved);
 
         // Send confirmation email to both parties
         try {
@@ -263,8 +269,10 @@ public class SessionBookingService {
     public SessionBookingResponseDTO markSessionNotCompleted(Long sessionId, String providerEmail) {
         SessionBookingEntity session = loadAndValidateProviderOwnership(sessionId, providerEmail);
 
-        if (session.getStatus() == SessionStatus.COMPLETED || session.getStatus() == SessionStatus.NOT_COMPLETED) {
-            throw new IllegalStateException("Session is already in a terminal state: " + session.getStatus());
+        if (session.getStatus() != SessionStatus.PENDING_COMPLETION_ACTION) {
+            throw new IllegalStateException(
+                    "Session can only be marked as NOT_COMPLETED if it is in PENDING_COMPLETION_ACTION state. Current status: "
+                            + session.getStatus());
         }
 
         session.setStatus(SessionStatus.NOT_COMPLETED);
@@ -332,6 +340,25 @@ public class SessionBookingService {
     private void sendReminderEmails(SessionBookingEntity session) {
         emailService.sendSessionReminderToClient(session);
         emailService.sendSessionReminderToProvider(session);
+    }
+
+    private void scheduleSessionReminders(SessionBookingEntity session) {
+        LocalDateTime sessionStart = LocalDateTime.of(session.getSessionDate(), session.getStartTime());
+        LocalDateTime reminderTime = sessionStart.minusMinutes(30);
+        long epochSeconds = reminderTime.toEpochSecond(java.time.ZoneOffset.UTC);
+
+        String clientSubject = "Session Reminder – Starts in 30 Minutes";
+        String clientBody = String.format(
+                "Dear %s,\n\nThis is a reminder that your session with Dr. %s starts in 30 minutes.",
+                session.getClient().getName(), session.getProvider().getName());
+
+        String providerSubject = "Upcoming Session in 30 Minutes";
+        String providerBody = String.format("Dear %s,\n\nYou have an upcoming session with %s starting in 30 minutes.",
+                session.getProvider().getName(), session.getClient().getName());
+
+        emailService.sendScheduledReminder(session.getClient().getEmail(), clientSubject, clientBody, epochSeconds);
+        emailService.sendScheduledReminder(session.getProvider().getEmail(), providerSubject, providerBody,
+                epochSeconds);
     }
 
     private SessionBookingEntity loadAndValidateProviderOwnership(Long sessionId, String providerEmail) {

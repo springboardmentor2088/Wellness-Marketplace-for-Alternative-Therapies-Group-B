@@ -1,5 +1,12 @@
 package com.wellness.backend.service;
 
+import com.sendgrid.SendGrid;
+import com.sendgrid.Request;
+import com.sendgrid.Response;
+import com.sendgrid.Method;
+import com.sendgrid.helpers.mail.Mail;
+import com.sendgrid.helpers.mail.objects.Email;
+import com.sendgrid.helpers.mail.objects.Content;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
@@ -7,6 +14,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
+
+import java.io.IOException;
 
 @Service
 @Slf4j
@@ -17,6 +26,9 @@ public class EmailService {
 
         @Value("${spring.mail.from}")
         private String fromEmail;
+
+        @Value("${SENDGRID_API_KEY:}")
+        private String apiKey;
 
         public void sendVerificationEmail(String to, String token) {
                 String verificationUrl = "http://localhost:5173/verify?token=" + token;
@@ -319,10 +331,7 @@ public class EmailService {
         }
 
         public void sendSessionNotCompletedEmail(com.wellness.backend.model.SessionBookingEntity session) {
-                String clientEmailTo = session.getClient().getEmail();
-                String providerEmailTo = session.getProvider().getEmail();
                 String dateTime = session.getSessionDate() + " at " + session.getStartTime();
-
                 String commonText = "Hello,\n\n"
                                 + "The session scheduled for " + dateTime + " has been marked as NOT COMPLETED.\n"
                                 + "As a result, a refund has been initiated for this session.\n\n"
@@ -334,27 +343,18 @@ public class EmailService {
                                 + "Best regards,\nWellness Hub";
 
                 // Email to Client
-                SimpleMailMessage clientMsg = new SimpleMailMessage();
-                clientMsg.setFrom(fromEmail);
-                clientMsg.setTo(clientEmailTo);
-                clientMsg.setSubject("⚠️ Wellness Hub – Session Not Completed & Refund Initiated");
-                clientMsg.setText("Dear " + session.getClient().getName() + ",\n\n" + commonText);
-                sendEmail(clientMsg);
+                sendImmediateSendGridEmail(session.getClient().getEmail(),
+                                "⚠️ Wellness Hub – Session Not Completed & Refund Initiated",
+                                "Dear " + session.getClient().getName() + ",\n\n" + commonText);
 
                 // Email to Provider
-                SimpleMailMessage providerMsg = new SimpleMailMessage();
-                providerMsg.setFrom(fromEmail);
-                providerMsg.setTo(providerEmailTo);
-                providerMsg.setSubject("⚠️ Wellness Hub – Session Not Completed Notification");
-                providerMsg.setText("Dear " + session.getProvider().getName() + ",\n\n" + commonText);
-                sendEmail(providerMsg);
+                sendImmediateSendGridEmail(session.getProvider().getEmail(),
+                                "⚠️ Wellness Hub – Session Not Completed Notification",
+                                "Dear " + session.getProvider().getName() + ",\n\n" + commonText);
         }
 
         public void sendSessionCompletedEmail(com.wellness.backend.model.SessionBookingEntity session) {
-                String clientEmailTo = session.getClient().getEmail();
-                String providerEmailTo = session.getProvider().getEmail();
                 String dateTime = session.getSessionDate() + " at " + session.getStartTime();
-
                 String commonText = "Hello,\n\n"
                                 + "The session scheduled for " + dateTime + " has been marked as COMPLETED.\n\n"
                                 + "Session Details:\n"
@@ -365,20 +365,40 @@ public class EmailService {
                                 + "Best regards,\nWellness Hub";
 
                 // Email to Client
-                SimpleMailMessage clientMsg = new SimpleMailMessage();
-                clientMsg.setFrom(fromEmail);
-                clientMsg.setTo(clientEmailTo);
-                clientMsg.setSubject("✅ Wellness Hub – Session Completed Confirmation");
-                clientMsg.setText("Dear " + session.getClient().getName() + ",\n\n" + commonText);
-                sendEmail(clientMsg);
+                sendImmediateSendGridEmail(session.getClient().getEmail(),
+                                "✅ Wellness Hub – Session Completed Confirmation",
+                                "Dear " + session.getClient().getName() + ",\n\n" + commonText);
 
                 // Email to Provider
-                SimpleMailMessage providerMsg = new SimpleMailMessage();
-                providerMsg.setFrom(fromEmail);
-                providerMsg.setTo(providerEmailTo);
-                providerMsg.setSubject("✅ Wellness Hub – Session Completed Confirmation");
-                providerMsg.setText("Dear " + session.getProvider().getName() + ",\n\n" + commonText);
-                sendEmail(providerMsg);
+                sendImmediateSendGridEmail(session.getProvider().getEmail(),
+                                "✅ Wellness Hub – Session Completed Confirmation",
+                                "Dear " + session.getProvider().getName() + ",\n\n" + commonText);
+        }
+
+        public String sendScheduledReminder(String to, String subject, String body, long sendAt) {
+                Email from = new Email(fromEmail);
+                Email recipient = new Email(to);
+                Content content = new Content("text/plain", body);
+                Mail mail = new Mail(from, subject, recipient, content);
+                mail.setSendAt(sendAt);
+
+                SendGrid sg = new SendGrid(apiKey);
+                Request request = new Request();
+                try {
+                        request.setMethod(Method.POST);
+                        request.setEndpoint("mail/send");
+                        request.setBody(mail.build());
+                        log.info("📧 Scheduling SendGrid email to {} for epoch {}", to, sendAt);
+                        Response response = sg.api(request);
+                        log.info("✅ SendGrid Response: {} - {}", response.getStatusCode(), response.getBody());
+                        if (response.getHeaders() != null) {
+                                return response.getHeaders().getOrDefault("X-Message-Id", "PENDING");
+                        }
+                        return "SENT";
+                } catch (IOException ex) {
+                        log.error("❌ SendGrid Error while scheduling to {}: {}", to, ex.getMessage());
+                        return null;
+                }
         }
 
         private void sendEmail(SimpleMailMessage message) {
@@ -391,6 +411,26 @@ public class EmailService {
                 } catch (org.springframework.mail.MailException e) {
                         log.error("❌ SMTP Error while sending to {}: {}", recipient, e.getMessage());
                         throw e; // Rethrow for @Retryable if applicable, or for the controller catch
+                }
+        }
+
+        private void sendImmediateSendGridEmail(String to, String subject, String body) {
+                Email from = new Email(fromEmail);
+                Email recipient = new Email(to);
+                Content content = new Content("text/plain", body);
+                Mail mail = new Mail(from, subject, recipient, content);
+
+                SendGrid sg = new SendGrid(apiKey);
+                Request request = new Request();
+                try {
+                        request.setMethod(Method.POST);
+                        request.setEndpoint("mail/send");
+                        request.setBody(mail.build());
+                        log.info("📧 Sending immediate SendGrid email to {}...", to);
+                        Response response = sg.api(request);
+                        log.info("✅ SendGrid Response: {} - {}", response.getStatusCode(), response.getBody());
+                } catch (IOException ex) {
+                        log.error("❌ SendGrid Error while sending to {}: {}", to, ex.getMessage());
                 }
         }
 

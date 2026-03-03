@@ -8,5 +8,6 @@ public enum BookingStatus {
     RESCHEDULED,
     COMPLETED,
     CANCELLED,
-    NOT_COMPLETED
+    NOT_COMPLETED,
+    PENDING_COMPLETION_ACTION
 }

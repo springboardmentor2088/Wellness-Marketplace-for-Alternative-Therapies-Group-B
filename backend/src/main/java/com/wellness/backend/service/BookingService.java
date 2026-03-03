@@ -112,8 +112,9 @@ public class BookingService {
         notificationService.notifyBookingAcceptedForClient(saved);
         try {
             emailService.sendBookingConfirmedToClient(saved);
+            scheduleBookingReminders(saved);
         } catch (Exception e) {
-            log.error("Failed to send booking confirmation email for booking {}: {}", id, e.getMessage());
+            log.error("Failed to send booking confirmation/reminder for booking {}: {}", id, e.getMessage());
         }
         return mapToResponseDTO(saved);
     }
@@ -191,8 +192,9 @@ public class BookingService {
         notificationService.notifyBookingAcceptedForClient(saved);
         try {
             emailService.sendBookingConfirmedToClient(saved);
+            scheduleBookingReminders(saved);
         } catch (Exception e) {
-            log.error("Failed to send reschedule confirmation email for booking {}: {}", id, e.getMessage());
+            log.error("Failed to send reschedule confirmation/reminder for booking {}: {}", id, e.getMessage());
         }
         return mapToResponseDTO(saved);
     }
@@ -200,6 +202,13 @@ public class BookingService {
     public BookingResponseDTO completeBooking(Long id) {
         BookingEntity booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        if (booking.getStatus() != BookingStatus.PENDING_COMPLETION_ACTION) {
+            throw new IllegalStateException(
+                    "Booking can only be completed if it is in PENDING_COMPLETION_ACTION state. Current status: "
+                            + booking.getStatus());
+        }
+
         booking.setStatus(BookingStatus.COMPLETED);
         return mapToResponseDTO(bookingRepository.save(booking));
     }
@@ -252,13 +261,37 @@ public class BookingService {
     }
 
     private void sendReminderEmails(BookingEntity booking) {
-        try {
-            emailService.sendSessionReminderToClient(booking);
-        } catch (Exception ignored) {
-        }
-        try {
-            emailService.sendSessionReminderToProvider(booking);
-        } catch (Exception ignored) {
+        // Fallback or legacy reminder logic
+    }
+
+    private void scheduleBookingReminders(BookingEntity booking) {
+        LocalDateTime sessionStart = booking.getBookingDate();
+        LocalDateTime reminderTime = sessionStart.minusMinutes(30);
+        long epochSeconds = reminderTime.toEpochSecond(java.time.ZoneOffset.UTC);
+
+        String clientSubject = "Notification: Session Reminder – Starts in 30 Minutes";
+        String clientBody = String.format(
+                "Dear %s,\n\nThis is a reminder that your session with %s starts in 30 minutes.",
+                booking.getUser().getName(), booking.getPractitioner().getName());
+
+        String practitionerSubject = "Notification: Upcoming Session in 30 Minutes";
+        String practitionerBody = String.format(
+                "Dear %s,\n\nThis is a reminder that you have a session with %s starting in 30 minutes.",
+                booking.getPractitioner().getName(), booking.getUser().getName());
+
+        // Send to patient
+        emailService.sendScheduledReminder(booking.getUser().getEmail(), clientSubject, clientBody, epochSeconds);
+
+        // Send to provider (practitioner) and save message ID
+        String messageId = emailService.sendScheduledReminder(booking.getPractitioner().getEmail(), practitionerSubject,
+                practitionerBody, epochSeconds);
+
+        if (messageId != null) {
+            booking.setReminderScheduled(true);
+            booking.setReminderScheduledAt(reminderTime);
+            booking.setProviderMessageId(messageId);
+            bookingRepository.save(booking);
+            log.info("✅ Persistence: Reminder scheduled and fields updated for booking ID: {}", booking.getId());
         }
     }
 
