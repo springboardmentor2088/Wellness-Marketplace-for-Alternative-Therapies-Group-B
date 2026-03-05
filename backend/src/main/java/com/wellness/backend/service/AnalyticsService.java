@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 public class AnalyticsService {
 
         private final BookingRepository bookingRepository;
+        private final com.wellness.backend.repository.SessionBookingRepository sessionBookingRepository;
         private final OrderRepository orderRepository;
 
         public PractitionerAnalyticsDTO getPractitionerAnalytics(Long practitionerId) {
@@ -138,10 +139,22 @@ public class AnalyticsService {
                 LocalDateTime monthStart = now.with(TemporalAdjusters.firstDayOfMonth()).with(LocalTime.MIN);
                 LocalDateTime yearStart = now.with(TemporalAdjusters.firstDayOfYear()).with(LocalTime.MIN);
 
-                long sessionsAttended = bookingRepository.countByUser_IdAndStatusIn(userId,
+                long sessionsAttendedLegacy = bookingRepository.countByUser_IdAndStatusIn(userId,
                                 List.of(BookingStatus.ACCEPTED, BookingStatus.CONFIRMED, BookingStatus.RESCHEDULED,
                                                 BookingStatus.COMPLETED, BookingStatus.PENDING_COMPLETION_ACTION));
-                BigDecimal totalSessionSpent = orZero(bookingRepository.sumTotalSessionSpentByPatient(userId));
+                long sessionsAttendedSmart = sessionBookingRepository.countByClient_IdAndStatusIn(userId,
+                                List.of(com.wellness.backend.model.SessionStatus.ACCEPTED,
+                                                com.wellness.backend.model.SessionStatus.CONFIRMED,
+                                                com.wellness.backend.model.SessionStatus.RESCHEDULE_REQUESTED,
+                                                com.wellness.backend.model.SessionStatus.COMPLETED,
+                                                com.wellness.backend.model.SessionStatus.PENDING_COMPLETION_ACTION));
+                long sessionsAttended = sessionsAttendedLegacy + sessionsAttendedSmart;
+
+                BigDecimal totalSessionSpentLegacy = orZero(bookingRepository.sumTotalSessionSpentByPatient(userId));
+                BigDecimal totalSessionSpentSmart = orZero(
+                                sessionBookingRepository.sumTotalSessionSpentByPatient(userId));
+                BigDecimal totalSessionSpent = totalSessionSpentLegacy.add(totalSessionSpentSmart);
+
                 BigDecimal totalProductSpent = orZero(orderRepository.sumTotalProductSpentByPatient(userId));
                 BigDecimal totalSpent = totalSessionSpent.add(totalProductSpent);
 
@@ -157,9 +170,22 @@ public class AnalyticsService {
                                 orderRepository.sumProductSpentByPatientAndDateRange(userId, yearStart, now));
                 BigDecimal yearlySpent = sessionThisYear.add(productThisYear);
 
-                List<BookingResponseDTO> recentSessions = bookingRepository
+                List<BookingResponseDTO> recentLegacy = bookingRepository
                                 .findTop5ByUser_IdOrderByBookingDateDesc(userId)
                                 .stream().map(this::mapToBookingDTO).collect(Collectors.toList());
+
+                List<BookingResponseDTO> recentSmart = sessionBookingRepository
+                                .findTop5ByClient_IdOrderBySessionDateDescStartTimeDesc(userId)
+                                .stream().map(this::mapSessionToBookingDTO).collect(Collectors.toList());
+
+                // Merge and take top 5
+                List<BookingResponseDTO> recentSessions = new java.util.ArrayList<>();
+                recentSessions.addAll(recentLegacy);
+                recentSessions.addAll(recentSmart);
+                recentSessions.sort((a, b) -> b.getBookingDate().compareTo(a.getBookingDate()));
+                if (recentSessions.size() > 5) {
+                        recentSessions = recentSessions.subList(0, 5);
+                }
 
                 List<OrderDTO> recentOrders = orderRepository.findTop5ByUser_IdOrderByOrderDateDesc(userId)
                                 .stream().map(this::mapToOrderDTO).collect(Collectors.toList());
@@ -214,6 +240,35 @@ public class AnalyticsService {
                                         .id(b.getPractitioner().getId())
                                         .fullName(b.getPractitioner().getName())
                                         .specialization(b.getPractitioner().getSpecialization())
+                                        .profileImage(profileImg)
+                                        .build());
+                }
+                return dto;
+        }
+
+        private BookingResponseDTO mapSessionToBookingDTO(com.wellness.backend.model.SessionBookingEntity s) {
+                BookingResponseDTO dto = new BookingResponseDTO();
+                dto.setId(s.getId());
+                dto.setUserId(s.getClient().getId());
+                dto.setClientName(s.getClient().getName());
+                // Combine date and time for consistent LocalDateTime handling
+                dto.setBookingDate(LocalDateTime.of(s.getSessionDate(), s.getStartTime()));
+                dto.setStartTime(s.getStartTime().toString());
+                dto.setDuration(s.getDuration());
+                dto.setStatus(s.getStatus().name());
+                dto.setNotes(s.getIssueDescription());
+                dto.setPractitionerComment(s.getProviderMessage());
+                dto.setSessionFee(s.getProvider().getSessionFee());
+
+                if (s.getProvider() != null) {
+                        String profileImg = s.getProvider().getProfileImage();
+                        if (profileImg != null && !profileImg.startsWith("http")) {
+                                profileImg = "http://localhost:8080/uploads/" + profileImg;
+                        }
+                        dto.setPractitioner(UserDTO.builder()
+                                        .id(s.getProvider().getId())
+                                        .fullName(s.getProvider().getName())
+                                        .specialization(s.getProvider().getSpecialization())
                                         .profileImage(profileImg)
                                         .build());
                 }

@@ -266,8 +266,18 @@ export const api = {
     return response.data
   },
 
+  async getUserBookingHistory(userId: number): Promise<Booking[]> {
+    const response = await apiClient.get(`/bookings/user/${userId}/history`)
+    return response.data
+  },
+
   async getPractitionerBookings(practitionerId: number): Promise<Booking[]> {
     const response = await apiClient.get(`/bookings/practitioner/${practitionerId}`)
+    return response.data
+  },
+
+  async getPractitionerBookingHistory(practitionerId: number): Promise<Booking[]> {
+    const response = await apiClient.get(`/bookings/practitioner/${practitionerId}/history`)
     return response.data
   },
 
@@ -384,8 +394,18 @@ export const api = {
     return response.data
   },
 
+  async getProviderSessionsHistory(providerId: number): Promise<SessionBooking[]> {
+    const response = await apiClient.get(`/sessions/provider/${providerId}/history`)
+    return response.data
+  },
+
   async getClientSessions(clientId: number): Promise<SessionBooking[]> {
     const response = await apiClient.get(`/sessions/client/${clientId}`)
+    return response.data
+  },
+
+  async getClientSessionsHistory(clientId: number): Promise<SessionBooking[]> {
+    const response = await apiClient.get(`/sessions/client/${clientId}/history`)
     return response.data
   },
 

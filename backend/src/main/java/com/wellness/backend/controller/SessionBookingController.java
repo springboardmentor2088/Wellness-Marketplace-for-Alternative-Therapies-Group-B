@@ -42,6 +42,19 @@ public class SessionBookingController {
         return ResponseEntity.ok(sessionBookingService.getSessionsForClient(clientId));
     }
 
+    @GetMapping("/provider/{providerId}/history")
+    @PreAuthorize("hasRole('PROVIDER')")
+    public ResponseEntity<List<SessionBookingResponseDTO>> getSessionsHistoryForProvider(
+            @PathVariable Long providerId) {
+        return ResponseEntity.ok(sessionBookingService.getSessionsHistoryForProvider(providerId));
+    }
+
+    @GetMapping("/client/{clientId}/history")
+    @PreAuthorize("hasRole('CLIENT')")
+    public ResponseEntity<List<SessionBookingResponseDTO>> getSessionsHistoryForClient(@PathVariable Long clientId) {
+        return ResponseEntity.ok(sessionBookingService.getSessionsHistoryForClient(clientId));
+    }
+
     @PutMapping("/{id}/accept")
     @PreAuthorize("hasRole('PROVIDER')")
     public ResponseEntity<SessionBookingResponseDTO> acceptSession(

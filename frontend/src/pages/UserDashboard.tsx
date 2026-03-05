@@ -52,15 +52,18 @@ function PractitionerStatusBadge({ status }: { status?: string }) {
   )
 }
 
-const getBookingStatus = (booking: Booking): 'Pending' | 'Ongoing' | 'Completed' | 'Upcoming' | 'Not Completed' => {
+const getBookingStatus = (booking: Booking): 'Pending' | 'Ongoing' | 'Completed' | 'Upcoming' | 'Not Completed' | 'Cancelled' | 'Action Required' => {
   if (booking.status === 'COMPLETED') return 'Completed'
   if (booking.status === 'NOT_COMPLETED') return 'Not Completed'
+  if (booking.status === 'CANCELLED') return 'Cancelled'
+  if (booking.status === 'REJECTED') return 'Cancelled'
+  if (booking.status === 'PENDING_COMPLETION_ACTION') return 'Completed'
   if (!booking.bookingDate || !booking.startTime) return 'Pending'
 
   const now = new Date()
   const dateStr = booking.bookingDate.split('T')[0]
   const start = new Date(`${dateStr}T${booking.startTime}`)
-  const dur = booking.duration || 30
+  const dur = booking.duration || 60
   const end = new Date(start.getTime() + dur * 60 * 1000)
 
   if (now < start) return 'Upcoming'
@@ -68,14 +71,14 @@ const getBookingStatus = (booking: Booking): 'Pending' | 'Ongoing' | 'Completed'
   return 'Completed'
 }
 
-const getBookingStatusClasses = (status: 'Pending' | 'Ongoing' | 'Completed' | 'Upcoming' | 'Not Completed') => {
+const getBookingStatusClasses = (status: 'Pending' | 'Ongoing' | 'Completed' | 'Upcoming' | 'Not Completed' | 'Cancelled' | 'Action Required') => {
   if (status === 'Pending' || status === 'Upcoming') {
     return 'border-amber-200 text-amber-700 bg-amber-50'
   }
   if (status === 'Ongoing') {
     return 'border-sky-200 text-sky-700 bg-sky-50'
   }
-  if (status === 'Not Completed') {
+  if (status === 'Not Completed' || status === 'Cancelled') {
     return 'border-rose-200 text-rose-700 bg-rose-50'
   }
   // Completed
@@ -123,8 +126,33 @@ export function UserDashboard() {
         specialization: userProfile.specialization,
       })
       if (userProfile.id) {
-        const userBookings = await api.getUserBookings(userProfile.id)
-        setBookings(userBookings)
+        // Fetch both legacy bookings and smart sessions history
+        const [bookingsHistory, sessionsHistory] = await Promise.all([
+          api.getUserBookingHistory(userProfile.id),
+          api.getClientSessionsHistory(userProfile.id)
+        ]);
+
+        // Map SessionBooking to Booking interface for consistency in the dashboard
+        const mappedSessions: Booking[] = sessionsHistory.map(s => ({
+          id: s.id || 0,
+          userId: s.clientId,
+          bookingDate: s.sessionDate,
+          startTime: s.startTime,
+          endTime: s.endTime,
+          duration: s.duration,
+          notes: s.issueDescription,
+          practitionerComment: s.providerMessage,
+          status: s.status,
+          sessionFee: s.sessionFee,
+          practitioner: {
+            id: s.providerId,
+            fullName: s.providerName || 'Practitioner',
+            specialization: s.providerSpecialization || 'Specialist',
+            profileImage: s.providerProfileImage || ''
+          }
+        }));
+
+        setBookings([...bookingsHistory, ...mappedSessions])
         fetchAnalytics(userProfile.id)
       }
       // Fetch only approved practitioners for patient view
@@ -744,9 +772,9 @@ export function UserDashboard() {
                   </h2>
                 </div>
                 <div className="space-y-4">
-                  {bookings.filter(b => b.status === 'COMPLETED' || b.status === 'NOT_COMPLETED' || getBookingStatus(b) === 'Completed' || getBookingStatus(b) === 'Not Completed').length > 0 ? (
+                  {bookings.filter(b => ['COMPLETED', 'NOT_COMPLETED', 'CANCELLED', 'REJECTED', 'PENDING_COMPLETION_ACTION'].includes(b.status) || ['Completed', 'Not Completed', 'Cancelled'].includes(getBookingStatus(b))).length > 0 ? (
                     bookings
-                      .filter(b => b.status === 'COMPLETED' || b.status === 'NOT_COMPLETED' || getBookingStatus(b) === 'Completed' || getBookingStatus(b) === 'Not Completed')
+                      .filter(b => ['COMPLETED', 'NOT_COMPLETED', 'CANCELLED', 'REJECTED', 'PENDING_COMPLETION_ACTION'].includes(b.status) || ['Completed', 'Not Completed', 'Cancelled'].includes(getBookingStatus(b)))
                       .slice()
                       .sort((a, b) => new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime())
                       .map((booking, idx) => (

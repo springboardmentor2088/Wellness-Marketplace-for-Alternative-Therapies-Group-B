@@ -4,6 +4,7 @@ import com.wellness.backend.model.BookingEntity;
 import com.wellness.backend.model.BookingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -60,4 +61,9 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
         List<BookingEntity> findByStatusInAndReminderSentFalse(List<BookingStatus> statuses);
 
         List<BookingEntity> findTop5ByUser_IdOrderByBookingDateDesc(Long userId);
+
+        @Query("SELECT b FROM BookingEntity b WHERE b.status IN (com.wellness.backend.model.BookingStatus.CONFIRMED, com.wellness.backend.model.BookingStatus.ACCEPTED) "
+                        +
+                        "AND b.bookingDate < :threshold")
+        List<BookingEntity> findStaleConfirmedBookings(@Param("threshold") LocalDateTime threshold);
 }

@@ -21,8 +21,12 @@ public class SessionReminderScheduler {
         try {
             sessionBookingService.processSessionReminders();
             bookingService.processSessionReminders();
+
+            // Auto-complete sessions that have passed
+            sessionBookingService.autoProcessSessionCompletion();
+            bookingService.autoProcessSessionCompletion();
         } catch (Exception e) {
-            log.error("❌ Error during session reminder processing", e);
+            log.error("❌ Error during session reminder/completion processing", e);
         }
         log.info("✅ Session Reminder Scheduler finished.");
     }

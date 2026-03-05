@@ -14,6 +14,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
+import jakarta.annotation.PostConstruct;
 
 import java.io.IOException;
 
@@ -29,6 +30,17 @@ public class EmailService {
 
         @Value("${SENDGRID_API_KEY:}")
         private String apiKey;
+
+        @PostConstruct
+        public void init() {
+                if (apiKey == null || apiKey.isBlank() || apiKey.equals("YOUR_REAL_SENDGRID_API_KEY")) {
+                        log.warn("❌❌❌ SENDGRID_API_KEY is not configured! "
+                                        + "Scheduled email reminders will FAIL silently. "
+                                        + "Set the SENDGRID_API_KEY environment variable or update application.properties.");
+                } else {
+                        log.info("✅ SendGrid API key loaded successfully (length={}).", apiKey.length());
+                }
+        }
 
         public void sendVerificationEmail(String to, String token) {
                 String verificationUrl = "http://localhost:5173/verify?token=" + token;
@@ -421,6 +433,13 @@ public class EmailService {
         }
 
         public String sendScheduledReminder(String to, String subject, String body, long sendAt) {
+
+                // === FIX ADDED : API KEY CHECK ===
+                if (apiKey == null || apiKey.isBlank()) {
+                        log.error("❌ SendGrid API key missing. Cannot schedule reminder email to {}", to);
+                        return null;
+                }
+
                 Email from = new Email(fromEmail);
                 Email recipient = new Email(to);
                 Content content = new Content("text/plain", body);
@@ -429,17 +448,29 @@ public class EmailService {
 
                 SendGrid sg = new SendGrid(apiKey);
                 Request request = new Request();
+
                 try {
                         request.setMethod(Method.POST);
                         request.setEndpoint("mail/send");
                         request.setBody(mail.build());
+
                         log.info("📧 Scheduling SendGrid email to {} for epoch {}", to, sendAt);
+
                         Response response = sg.api(request);
-                        log.info("✅ SendGrid Response: {} - {}", response.getStatusCode(), response.getBody());
-                        if (response.getHeaders() != null) {
-                                return response.getHeaders().getOrDefault("X-Message-Id", "PENDING");
+
+                        // === FIX ADDED : RESPONSE VALIDATION ===
+                        if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
+                                log.info("✅ SendGrid accepted scheduled email");
+
+                                if (response.getHeaders() != null) {
+                                        return response.getHeaders().getOrDefault("X-Message-Id", "PENDING");
+                                }
+                                return "SENT";
                         }
-                        return "SENT";
+
+                        log.error("❌ SendGrid scheduling failed. Status={}", response.getStatusCode());
+                        return null;
+
                 } catch (IOException ex) {
                         log.error("❌ SendGrid Error while scheduling to {}: {}", to, ex.getMessage());
                         return null;
@@ -460,6 +491,13 @@ public class EmailService {
         }
 
         private void sendImmediateSendGridEmail(String to, String subject, String body) {
+
+                // === FIX ADDED : API KEY CHECK ===
+                if (apiKey == null || apiKey.isBlank()) {
+                        log.error("❌ SendGrid API key missing. Cannot send email to {}", to);
+                        return;
+                }
+
                 Email from = new Email(fromEmail);
                 Email recipient = new Email(to);
                 Content content = new Content("text/plain", body);
@@ -467,13 +505,18 @@ public class EmailService {
 
                 SendGrid sg = new SendGrid(apiKey);
                 Request request = new Request();
+
                 try {
                         request.setMethod(Method.POST);
                         request.setEndpoint("mail/send");
                         request.setBody(mail.build());
+
                         log.info("📧 Sending immediate SendGrid email to {}...", to);
+
                         Response response = sg.api(request);
+
                         log.info("✅ SendGrid Response: {} - {}", response.getStatusCode(), response.getBody());
+
                 } catch (IOException ex) {
                         log.error("❌ SendGrid Error while sending to {}: {}", to, ex.getMessage());
                 }

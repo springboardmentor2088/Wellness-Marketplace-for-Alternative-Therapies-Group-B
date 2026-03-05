@@ -23,6 +23,11 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.getClientUpcomingBookings(userId));
     }
 
+    @GetMapping("/user/{userId}/history")
+    public ResponseEntity<List<BookingResponseDTO>> getUserBookingHistory(@PathVariable Long userId) {
+        return ResponseEntity.ok(bookingService.getClientHistory(userId));
+    }
+
     /**
      * Patient Calendar: returns only ACCEPTED / CONFIRMED / RESCHEDULED bookings
      */
@@ -39,6 +44,11 @@ public class BookingController {
     @GetMapping("/client/{clientId}")
     public ResponseEntity<List<BookingResponseDTO>> getClientUpcomingBookings(@PathVariable Long clientId) {
         return ResponseEntity.ok(bookingService.getClientUpcomingBookings(clientId));
+    }
+
+    @GetMapping("/practitioner/{practitionerId}/history")
+    public ResponseEntity<List<BookingResponseDTO>> getPractitionerHistory(@PathVariable Long practitionerId) {
+        return ResponseEntity.ok(bookingService.getPractitionerHistory(practitionerId));
     }
 
     @GetMapping("/practitioner/{practitionerId}")

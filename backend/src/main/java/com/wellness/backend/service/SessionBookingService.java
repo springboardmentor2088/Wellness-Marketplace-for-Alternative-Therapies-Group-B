@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -67,8 +68,10 @@ public class SessionBookingService {
         System.out.println("Saving session booking with status: " + entity.getStatus());
 
         SessionBookingEntity saved = sessionBookingRepository.save(entity);
-        // Schedule persistent reminders (SendGrid)
-        reminderService.scheduleSessionReminders(saved);
+        // NOTE: Reminder is NOT scheduled here. It is scheduled only when the session
+        // reaches CONFIRMED status (in acceptSession / confirmReschedule).
+        log.info("📅 New session booking created (PENDING) ID: {} — reminder deferred until confirmation.",
+                saved.getId());
         return toDto(saved);
     }
 
@@ -96,6 +99,19 @@ public class SessionBookingService {
                 now.toLocalDate(),
                 now.toLocalTime(),
                 excluded).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<SessionBookingResponseDTO> getSessionsHistoryForClient(Long clientId) {
+        return sessionBookingRepository.findByClient_Id(clientId).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<SessionBookingResponseDTO> getSessionsHistoryForProvider(Long providerId) {
+        return sessionBookingRepository.findByProvider_Id(providerId).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
@@ -172,6 +188,7 @@ public class SessionBookingService {
         try {
             notificationService.notifySessionCancelled(saved, canceller);
             emailService.sendSessionCancelledEmail(saved, canceller);
+            reminderService.cancelSessionReminders(saved.getId()); // Cancel reminders for cancelled session
         } catch (Exception e) {
             log.error("Failed to send cancellation notification for session {}: {}", sessionId, e.getMessage());
         }
@@ -236,6 +253,26 @@ public class SessionBookingService {
                 } catch (Exception e) {
                     log.error("❌ Failed to send in-app reminder for session {}: {}", session.getId(), e.getMessage());
                 }
+            }
+        }
+    }
+
+    /**
+     * Finds confirmed sessions that have passed and moves them to
+     * PENDING_COMPLETION_ACTION
+     */
+    @Transactional
+    public void autoProcessSessionCompletion() {
+        LocalDateTime nowIst = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
+        List<SessionBookingEntity> stale = sessionBookingRepository.findStaleConfirmedSessions(
+                nowIst.toLocalDate(),
+                nowIst.toLocalTime());
+
+        if (!stale.isEmpty()) {
+            log.info("⏳ Auto-completing {} stale sessions to PENDING_COMPLETION_ACTION...", stale.size());
+            for (SessionBookingEntity session : stale) {
+                session.setStatus(SessionStatus.PENDING_COMPLETION_ACTION);
+                sessionBookingRepository.save(session);
             }
         }
     }
@@ -337,9 +374,19 @@ public class SessionBookingService {
     private boolean isReminderDue(SessionBookingEntity session, LocalDateTime now) {
         LocalDateTime start = LocalDateTime.of(session.getSessionDate(), session.getStartTime());
 
-        // Due if session starts within the next 30 minutes (even if it already started,
-        // up to 5 mins ago to handle minor lag)
-        return start.isAfter(now.minusMinutes(5)) && start.isBefore(now.plusMinutes(30));
+        // Use IST (Asia/Kolkata) to match ReminderService.calculateEpoch() timezone.
+        // 'now' is already passed in from processSessionReminders; re-derive with zone
+        // here.
+        LocalDateTime nowIst = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
+
+        // Due if session starts within the next 30 minutes (with up to 5 mins grace for
+        // scheduler lag)
+        boolean due = start.isAfter(nowIst.minusMinutes(5)) && start.isBefore(nowIst.plusMinutes(30));
+        if (!due) {
+            log.debug("⏭ Skipping session ID {} — not yet in reminder window (start={}, now={})",
+                    session.getId(), start, nowIst);
+        }
+        return due;
     }
 
     private SessionBookingEntity loadAndValidateProviderOwnership(Long sessionId, String providerEmail) {

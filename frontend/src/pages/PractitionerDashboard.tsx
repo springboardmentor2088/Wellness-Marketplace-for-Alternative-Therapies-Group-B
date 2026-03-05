@@ -43,10 +43,13 @@ function VerificationStatusBadge({ status }: { status?: string }) {
   )
 }
 
-const getSessionStatus = (booking: any): 'Pending' | 'Ongoing' | 'Completed' | 'Upcoming' | 'Not Completed' => {
+const getSessionStatus = (booking: any): 'Pending' | 'Ongoing' | 'Completed' | 'Upcoming' | 'Not Completed' | 'Cancelled' | 'Rejected' | 'Refunded' => {
   const { bookingDate, sessionDate, startTime, duration, status } = booking
   if (status === 'COMPLETED') return 'Completed'
   if (status === 'NOT_COMPLETED') return 'Not Completed'
+  if (status === 'CANCELLED') return 'Cancelled'
+  if (status === 'REJECTED') return 'Rejected'
+  if (status === 'REFUNDED') return 'Refunded'
   const dateStr = (bookingDate || sessionDate || '').split('T')[0]
   if (!dateStr || !startTime) return 'Pending'
 
@@ -65,6 +68,8 @@ const getSessionStatusClasses = (status: ReturnType<typeof getSessionStatus>) =>
   if (status === 'Pending') return 'bg-yellow-100 text-yellow-700'
   if (status === 'Ongoing') return 'bg-blue-100 text-blue-700'
   if (status === 'Not Completed') return 'bg-rose-100 text-rose-700 font-black'
+  if (status === 'Cancelled' || status === 'Rejected') return 'bg-slate-100 text-slate-500 font-black'
+  if (status === 'Refunded') return 'bg-amber-100 text-amber-700 font-black'
   return 'bg-green-100 text-green-700 font-black'
 }
 
@@ -173,19 +178,30 @@ export function PractitionerDashboard() {
         sessionFee: res.sessionFee,
       });
       if (res.id) {
-        const [bookingRes, sessionRes] = await Promise.all([
+        const [bookingRes, sessionRes, bookingHistoryRes, sessionHistoryRes] = await Promise.all([
           api.getPractitionerBookings(res.id),
-          api.getProviderSessions(res.id)
+          api.getProviderSessions(res.id),
+          api.getPractitionerBookingHistory(res.id),
+          api.getProviderSessionsHistory(res.id)
         ]);
 
-        // Normalize sessions to match booking properties for the UI if necessary
-        const normalizedSessions = sessionRes.map(s => ({
+        // Helper to normalize smart sessions
+        const normalizeSmartSession = (s: SessionBooking) => ({
           ...s,
-          bookingDate: s.sessionDate, // mapping sessionDate to bookingDate for components
-          isSmartSession: true // marker to use specialized endpoints
-        }));
+          bookingDate: s.sessionDate,
+          isSmartSession: true
+        });
 
-        setBookings([...bookingRes, ...normalizedSessions] as any);
+        const normalizedSessions = sessionRes.map(normalizeSmartSession);
+        const normalizedHistorySessions = sessionHistoryRes.map(normalizeSmartSession);
+
+        // Merge all sessions, avoiding duplicates if any (though endpoints should be distinct)
+        const allSessions = [...bookingRes, ...normalizedSessions, ...bookingHistoryRes, ...normalizedHistorySessions];
+
+        // Remove potential duplicates by ID if same session is returned by both upcoming and history
+        const uniqueSessions = Array.from(new Map(allSessions.map(s => [s.id, s])).values());
+
+        setBookings(uniqueSessions as any);
         fetchStats(res.id);
         fetchAnalytics(res.id);
       }
@@ -855,7 +871,10 @@ export function PractitionerDashboard() {
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                           {bookings
-                            .filter(b => b.status === 'COMPLETED' || b.status === 'NOT_COMPLETED' || getSessionStatus(b) === 'Completed' || getSessionStatus(b) === 'Not Completed')
+                            .filter(b => {
+                              const s = getSessionStatus(b);
+                              return s === 'Completed' || s === 'Not Completed' || s === 'Cancelled' || s === 'Rejected' || s === 'Refunded';
+                            })
                             .slice()
                             .sort((a, b) => new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime())
                             .map((booking, idx) => {

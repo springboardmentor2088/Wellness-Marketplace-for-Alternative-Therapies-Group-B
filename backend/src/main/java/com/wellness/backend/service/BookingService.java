@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -252,6 +253,12 @@ public class BookingService {
         return mapToResponseDTO(saved);
     }
 
+    public List<BookingResponseDTO> getPractitionerHistory(Long practitionerId) {
+        return bookingRepository.findByPractitioner_Id(practitionerId).stream()
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
     public List<BookingResponseDTO> getPractitionerSessionHistory(Long practitionerId) {
         LocalDateTime now = LocalDateTime.now();
         // Strictly follow logic: status = COMPLETED and time passed
@@ -259,6 +266,32 @@ public class BookingService {
                 .filter(b -> b.getBookingDate().isBefore(now))
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<BookingResponseDTO> getClientHistory(Long clientId) {
+        return bookingRepository.findByUser_Id(clientId).stream()
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Finds confirmed bookings that have passed and moves them to
+     * PENDING_COMPLETION_ACTION
+     */
+    @Transactional
+    public void autoProcessSessionCompletion() {
+        LocalDateTime nowIst = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
+        List<BookingEntity> stale = bookingRepository.findStaleConfirmedBookings(nowIst);
+
+        if (!stale.isEmpty()) {
+            log.info("⏳ Auto-completing {} stale bookings to PENDING_COMPLETION_ACTION...", stale.size());
+            for (BookingEntity booking : stale) {
+                booking.setStatus(BookingStatus.PENDING_COMPLETION_ACTION);
+                bookingRepository.save(booking);
+                // Optional: notify practitioner that they need to confirm completion
+            }
+        }
     }
 
     /**
@@ -293,9 +326,17 @@ public class BookingService {
         if (start == null)
             return false;
 
-        // Due if session starts within the next 30 minutes (even if it already started,
-        // up to 5 mins ago to handle minor lag)
-        return start.isAfter(now.minusMinutes(5)) && start.isBefore(now.plusMinutes(30));
+        // Use IST (Asia/Kolkata) to match ReminderService.calculateEpoch() timezone.
+        LocalDateTime nowIst = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
+
+        // Due if session starts within the next 30 minutes (with up to 5 mins grace for
+        // scheduler lag)
+        boolean due = start.isAfter(nowIst.minusMinutes(5)) && start.isBefore(nowIst.plusMinutes(30));
+        if (!due) {
+            log.debug("⏭ Skipping booking ID {} — not yet in reminder window (start={}, now={})",
+                    booking.getId(), start, nowIst);
+        }
+        return due;
     }
 
     private BookingResponseDTO mapToResponseDTO(BookingEntity entity) {
