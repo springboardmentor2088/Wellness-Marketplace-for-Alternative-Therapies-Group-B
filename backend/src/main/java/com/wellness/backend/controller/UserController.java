@@ -52,6 +52,8 @@ public class UserController {
             user.setCountry(updatedProfile.getCountry());
         if (updatedProfile.getSpecialization() != null)
             user.setSpecialization(updatedProfile.getSpecialization());
+        if (updatedProfile.getSessionFee() != null)
+            user.setSessionFee(updatedProfile.getSessionFee());
 
         // Update password if provided
         if (updatedProfile.getPassword() != null && !updatedProfile.getPassword().isEmpty()) {

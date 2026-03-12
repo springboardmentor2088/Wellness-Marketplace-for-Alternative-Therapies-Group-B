@@ -1,40 +1,103 @@
-# ========================
-# ENV FILES
-# ========================
-.env
-backend/.env
-
-# ========================
-# JAVA / SPRING
-# ========================
-backend/target/
-target/
-*.class
-*.log
-*.jar
-
-# ========================
-# UPLOADS
-# ========================
-backend/uploads/
-
-# ========================
-# NODE / REACT
-# ========================
-frontend/node_modules/
+# ================================
+# Node / Frontend
+# ================================
 node_modules/
 dist/
 build/
+.next/
+out/
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/dist-ssr/
+*.local
 
-# ========================
-# IDE FILES
-# ========================
-.idea/
+# ================================
+# Logs
+# ================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+backend/*.log
+frontend/*.log
+backend/compile_output.txt
+
+# ================================
+# Environment / Secrets
+# ================================
+.env
+*.env
+.env.local
+.env.development
+.env.production
+backend/.env
+frontend/.env
+frontend/.env.local
+secrets.txt
+
+# ================================
+# Java / Spring Boot
+# ================================
+target/
+backend/target/
+*.class
+*.jar
+*.war
+*.lst
+*.log
+
+# ================================
+# H2 Database (auto created)
+# ================================
+*.mv.db
+*.trace.db
+
+# ================================
+# IDE / Editor Files
+# ================================
 .vscode/
+.idea/
 *.iml
+*.iws
+.project
+.classpath
+.settings/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
-# ========================
-# OS FILES
-# ========================
+# ================================
+# OS Files
+# ================================
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# ================================
+# Upload / Runtime Files
+# ================================
+uploads/
+backend/uploads/
+public/uploads/
+frontend/public/uploads/
+
+# ================================
+# Dependency Cache
+# ================================
+.cache/
+.tmp/
+
+# ================================
+# Test / Temporary
+# ================================
+test-booking.js
+*.tmp
+*.bak
+
+# ================================
+# Database Dumps
+# ================================
+*.sql

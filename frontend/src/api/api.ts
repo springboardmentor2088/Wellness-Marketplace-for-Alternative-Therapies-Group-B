@@ -4,6 +4,7 @@ import type { InternalAxiosRequestConfig } from 'axios'
 const API_BASE = 'http://localhost:8080/api'
 
 export interface LoginRequest { email: string; password: string }
+
 export interface RegisterRequest {
     name: string
     email: string
@@ -13,12 +14,14 @@ export interface RegisterRequest {
     city?: string
     country?: string
 }
+
 export interface AuthResponse {
-    accessToken: string;
-    role: string;
-    name: string;
-    emailVerified: boolean;
+    accessToken: string
+    role: string
+    name: string
+    emailVerified: boolean
 }
+
 export interface Profile {
     id: number
     name: string
@@ -40,17 +43,36 @@ export interface Booking {
     id?: number
     userId: number
     practitionerId: number
-    bookingDate?: string
-    status: 'PENDING' | 'CONFIRMED' | 'CANCELLED'
+    bookingDate: string
+    status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED'
     notes?: string
 }
 
-const apiClient = axios.create({ baseURL: API_BASE, withCredentials: true })
+export interface BookingRequest {
+    userId: number
+    practitionerId: number
+    bookingDate: string
+    notes?: string
+}
+
+const apiClient = axios.create({
+    baseURL: API_BASE,
+    withCredentials: true
+})
 
 apiClient.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-        const publicPaths = ['/auth/login', '/auth/register', '/auth/verify-otp', '/auth/resend-otp', '/auth/forgot-password']
-        const isPublic = publicPaths.some(path => config.url?.endsWith(path))
+        const publicPaths = [
+            '/auth/login',
+            '/auth/register',
+            '/auth/verify-otp',
+            '/auth/resend-otp',
+            '/auth/forgot-password'
+        ]
+
+        const isPublic = publicPaths.some(path =>
+            config.url?.endsWith(path)
+        )
 
         if (!isPublic) {
             const token = localStorage.getItem('accessToken')
@@ -58,6 +80,7 @@ apiClient.interceptors.request.use(
                 config.headers['Authorization'] = `Bearer ${token}`
             }
         }
+
         return config
     },
     (error) => Promise.reject(error)
@@ -66,23 +89,32 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
-        const publicPaths = ['/auth/login', '/auth/register', '/auth/verify-otp', '/auth/resend-otp', '/auth/forgot-password'];
-        const isPublic = publicPaths.some(path => error.config?.url?.endsWith(path));
+        const publicPaths = [
+            '/auth/login',
+            '/auth/register',
+            '/auth/verify-otp',
+            '/auth/resend-otp',
+            '/auth/forgot-password'
+        ]
 
-        // Only redirect to login on 401 for protected endpoints
+        const isPublic = publicPaths.some(path =>
+            error.config?.url?.endsWith(path)
+        )
+
         if (!isPublic && error.response?.status === 401) {
-            console.warn(`API 401 on ${error.config?.url}. Token invalid/expired. Redirecting to login.`);
             localStorage.removeItem('accessToken')
             localStorage.removeItem('userRole')
             localStorage.removeItem('emailVerified')
             localStorage.removeItem('userName')
             window.location.href = '/login'
         }
+
         return Promise.reject(error)
     }
 )
 
 export const api = {
+
     async login(data: LoginRequest): Promise<AuthResponse> {
         const response = await apiClient.post('/auth/login', data)
         localStorage.setItem('accessToken', response.data.accessToken)
@@ -115,64 +147,76 @@ export const api = {
         const formData = new FormData()
         formData.append('file', file)
         formData.append('userId', userId.toString())
+
         const response = await apiClient.post('/degree/upload', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
+            headers: { 'Content-Type': 'multipart/form-data' }
         })
+
         return response.data
     },
 
-    // Admin: get all practitioners (PROVIDER role)
     async getPractitioners(): Promise<Profile[]> {
         const response = await apiClient.get('/admin/users')
         return response.data
     },
 
-    // Admin: get all users (CLIENT + PROVIDER, no ADMIN)
     async getAllUsers(): Promise<Profile[]> {
         const response = await apiClient.get('/admin/all-users')
         return response.data
     },
 
-    // Approve a practitioner (admin)
     async approvePractitioner(id: number) {
         await apiClient.put(`/admin/approve/${id}`)
     },
 
-    // Reject a practitioner with optional comment (admin)
     async rejectPractitioner(id: number, comment?: string) {
         await apiClient.put(`/admin/reject/${id}`, { comment: comment || '' })
     },
 
-    // Request document reupload (admin)
     async requestReupload(id: number, comment?: string) {
         await apiClient.put(`/admin/request-reupload/${id}`, { comment: comment || '' })
     },
 
-    // Get only APPROVED practitioners (for patient dashboard & marketplace)
     async getApprovedPractitioners(): Promise<Profile[]> {
         const response = await apiClient.get('/user/practitioners')
         return response.data
     },
 
-    // Get all practitioners regardless of status (for admin-like views)
     async getAllPractitioners(): Promise<Profile[]> {
         const response = await apiClient.get('/user/all-practitioners')
         return response.data
     },
 
-    // Bookings
-    async createBooking(data: Booking): Promise<Booking> {
+    // ================= BOOKINGS =================
+
+    async createBooking(data: BookingRequest): Promise<Booking> {
         const response = await apiClient.post('/bookings', data)
         return response.data
     },
 
+    // 🔥 FIXED HERE
     async getUserBookings(userId: number): Promise<Booking[]> {
-        const response = await apiClient.get(`/bookings/user/${userId}`)
+        const response = await apiClient.get(`/bookings/client/${userId}`)
         return response.data
     },
 
     async getPractitionerBookings(practitionerId: number): Promise<Booking[]> {
         const response = await apiClient.get(`/bookings/practitioner/${practitionerId}`)
+        return response.data
+    },
+
+    async acceptBooking(id: number): Promise<Booking> {
+        const response = await apiClient.put(`/bookings/${id}/accept`)
+        return response.data
+    },
+
+    async rejectBooking(id: number): Promise<Booking> {
+        const response = await apiClient.put(`/bookings/${id}/reject`)
+        return response.data
+    },
+
+    async rescheduleBooking(id: number, data: { newSessionDate?: string, newStartTime?: string }): Promise<Booking> {
+        const response = await apiClient.put(`/bookings/${id}/reschedule`, data)
         return response.data
     },
 

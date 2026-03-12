@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { api, type Profile, type Booking } from '../api/api';
+import { api, type Profile, type Booking, type BookingRequest } from '../api';
+import { formatImageUrl } from '../utils/image';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -13,6 +14,9 @@ export function MarketplacePage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [bookingPractitioner, setBookingPractitioner] = useState<Profile | null>(null);
     const [bookingNotes, setBookingNotes] = useState('');
+    const [bookingDate, setBookingDate] = useState('');
+    const [selectedSlot, setSelectedSlot] = useState<{ start: string; end: string } | null>(null);
+    const [practitionerBookings, setPractitionerBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(false);
     const [fetchLoading, setFetchLoading] = useState(true);
     const [message, setMessage] = useState('');
@@ -38,24 +42,70 @@ export function MarketplacePage() {
         }
     };
 
+    const fetchPractitionerBookings = async (practitionerId: number) => {
+        try {
+            const existing = await api.getPractitionerBookings(practitionerId);
+            setPractitionerBookings(existing);
+        } catch (err) {
+            console.error(err);
+            setPractitionerBookings([]);
+        }
+    };
+
+    const generateTimeSlots = () => {
+        const slots: { start: string; end: string }[] = [];
+        let hour = 9;
+        let minute = 0;
+
+        while (hour < 18) {
+            const start = `${hour.toString().padStart(2, '0')}:${minute === 0 ? '00' : '30'}`;
+            minute += 30;
+            if (minute === 60) {
+                minute = 0;
+                hour++;
+            }
+            const endHour = minute === 0 ? hour : hour;
+            const endMinute = minute === 0 ? '00' : '30';
+            const end = `${endHour.toString().padStart(2, '0')}:${endMinute}`;
+            slots.push({ start, end });
+        }
+
+        return slots;
+    };
+
+    const slots = generateTimeSlots();
+
     const handleBook = async () => {
         if (!bookingPractitioner || !profile) return;
+        if (!bookingDate || !selectedSlot) {
+            setMessage('Please select a date and time slot.');
+            setTimeout(() => setMessage(''), 4000);
+            return;
+        }
         setLoading(true);
         try {
-            const bookingData: Booking = {
+            const selectedDateTime = `${bookingDate}T${selectedSlot.start}`;
+            const bookingData: BookingRequest = {
                 userId: profile.id,
                 practitionerId: bookingPractitioner.id,
-                status: 'PENDING',
+                bookingDate: new Date(selectedDateTime).toISOString(),
                 notes: bookingNotes
             };
             await api.createBooking(bookingData);
             setMessage(`Successfully requested booking with ${bookingPractitioner.name}`);
             setBookingPractitioner(null);
             setBookingNotes('');
+            setBookingDate('');
+            setSelectedSlot(null);
             setTimeout(() => setMessage(''), 4000);
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            setMessage('Failed to book session. Please try again.');
+            if (err.response?.status === 409) {
+                setMessage('This time slot is already booked. Please select another time.');
+            } else {
+                setMessage('Failed to book session. Please try again.');
+            }
+            setTimeout(() => setMessage(''), 4000);
         } finally {
             setLoading(false);
         }
@@ -127,8 +177,12 @@ export function MarketplacePage() {
                             >
                                 {/* Card Header */}
                                 <div className="relative h-40 bg-gradient-to-br from-brand-50 to-violet-50 flex items-center justify-center">
-                                    <div className="h-20 w-20 rounded-3xl bg-white shadow-lg flex items-center justify-center text-brand-600 text-3xl font-black group-hover:scale-110 transition-transform">
-                                        {p.name[0]}
+                                    <div className="h-20 w-20 rounded-3xl bg-white shadow-lg flex items-center justify-center text-brand-600 text-3xl font-black group-hover:scale-110 transition-transform overflow-hidden">
+                                        {p.profileImage ? (
+                                            <img src={formatImageUrl(p.profileImage)} alt={p.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            p.name[0]
+                                        )}
                                     </div>
                                     {/* Verified badge */}
                                     <div className="absolute top-4 right-4 bg-emerald-500 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter flex items-center gap-1 shadow-lg">
@@ -158,10 +212,18 @@ export function MarketplacePage() {
                                         <p className="flex items-center gap-2">
                                             <Calendar size={13} className="text-slate-400" /> Next available: Tomorrow
                                         </p>
+                                        <p className="flex items-center gap-2 font-black text-brand-700 bg-brand-50/50 px-3 py-1 rounded-xl w-fit">
+                                            <Sparkles size={12} /> ₹{p.sessionFee || 500} / Session
+                                        </p>
                                     </div>
 
                                     <button
-                                        onClick={() => setBookingPractitioner(p)}
+                                        onClick={() => {
+                                            setBookingPractitioner(p);
+                                            setBookingDate('');
+                                            setSelectedSlot(null);
+                                            fetchPractitionerBookings(p.id);
+                                        }}
                                         className="mt-auto w-full bg-brand-600 text-white font-black py-3.5 rounded-2xl hover:bg-brand-700 transition-all transform active:scale-95 shadow-lg shadow-brand-600/20"
                                     >
                                         Book Session
@@ -197,16 +259,88 @@ export function MarketplacePage() {
                                 </button>
 
                                 <div className="flex items-center gap-4 mb-6">
-                                    <div className="h-14 w-14 rounded-2xl bg-brand-50 flex items-center justify-center text-brand-600 text-2xl font-black">
-                                        {bookingPractitioner.name[0]}
+                                    <div className="h-14 w-14 rounded-2xl bg-brand-50 flex items-center justify-center text-brand-600 text-2xl font-black overflow-hidden">
+                                        {bookingPractitioner.profileImage ? (
+                                            <img src={formatImageUrl(bookingPractitioner.profileImage)} alt={bookingPractitioner.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            bookingPractitioner.name[0]
+                                        )}
                                     </div>
-                                    <div>
+                                    <div className="flex-1">
                                         <h2 className="text-2xl font-black text-slate-900">Book Session</h2>
-                                        <p className="text-slate-500 font-medium">with <span className="text-brand-600 font-black">{bookingPractitioner.name}</span></p>
+                                        <p className="text-slate-500 font-medium italic">with <span className="text-brand-600 font-black">{bookingPractitioner.name}</span></p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Fee</p>
+                                        <p className="text-xl font-black text-slate-900">₹{bookingPractitioner.sessionFee || 500}</p>
                                     </div>
                                 </div>
 
                                 <div className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Select Date</label>
+                                            <input
+                                                type="date"
+                                                min={new Date().toISOString().split('T')[0]}
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-slate-700 focus:outline-none focus:border-brand-400 font-medium"
+                                                value={bookingDate}
+                                                onChange={(e) => {
+                                                    setBookingDate(e.target.value);
+                                                    setSelectedSlot(null);
+                                                }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Select Time Slot</label>
+                                            {bookingDate ? (
+                                                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                                                    {slots.map((slot) => {
+                                                        const isSelected =
+                                                            selectedSlot?.start === slot.start && selectedSlot.end === slot.end;
+
+                                                        const slotDateTime = new Date(`${bookingDate}T${slot.start}`);
+                                                        const now = new Date();
+                                                        const isPast = slotDateTime <= now;
+
+                                                        const isBooked = practitionerBookings.some((b) => {
+                                                            if (!b.bookingDate) return false;
+                                                            const bDate = new Date(b.bookingDate);
+                                                            const bDateStr = bDate.toISOString().split('T')[0];
+                                                            const bTime = bDate.toISOString().slice(11, 16);
+                                                            const isSameDate = bDateStr === bookingDate;
+                                                            const isSameTime = bTime === slot.start;
+                                                            const isActiveStatus = b.status !== 'CANCELLED';
+                                                            return isSameDate && isSameTime && isActiveStatus;
+                                                        });
+
+                                                        const disabled = isPast || isBooked;
+
+                                                        return (
+                                                            <button
+                                                                key={`${slot.start}-${slot.end}`}
+                                                                type="button"
+                                                                onClick={() => !disabled && setSelectedSlot(slot)}
+                                                                disabled={disabled}
+                                                                className={`text-xs font-bold rounded-xl border px-3 py-2 text-left transition-all ${disabled
+                                                                    ? 'bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed'
+                                                                    : isSelected
+                                                                        ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
+                                                                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                                                                    }`}
+                                                            >
+                                                                {slot.start} – {slot.end}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            ) : (
+                                                <p className="text-xs text-slate-400 font-medium">
+                                                    Select a date to see available time slots.
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
                                     <div>
                                         <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Message / Notes</label>
                                         <textarea

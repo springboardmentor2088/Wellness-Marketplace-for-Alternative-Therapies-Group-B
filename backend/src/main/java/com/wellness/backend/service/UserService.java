@@ -47,6 +47,7 @@ public class UserService {
             user.setCountry(updatedUser.getCountry());
             user.setDegreeFile(updatedUser.getDegreeFile());
             user.setVerificationStatus(updatedUser.getVerificationStatus());
+            user.setSessionFee(updatedUser.getSessionFee());
             userRepository.save(user);
             return user;
         });

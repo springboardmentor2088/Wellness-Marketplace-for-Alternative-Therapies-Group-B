@@ -7,6 +7,9 @@ import { UserDashboard } from './pages/UserDashboard'
 import { PractitionerDashboard } from './pages/PractitionerDashboard'
 import { AdminDashboard } from './pages/AdminDashboard'
 import { MarketplacePage } from './pages/MarketplacePage'
+import { ProductsPage } from './pages/ProductsPage'
+import { MyProductsPage } from './pages/MyProductsPage'
+import { ProductOrdersPage } from './pages/ProductOrdersPage'
 import { ProtectedRoute } from './components/ProtectedRoute'
 
 import { VerificationPendingPage } from './pages/VerificationPendingPage'
@@ -32,6 +35,24 @@ function App() {
 
         {/* Marketplace */}
         <Route path="/marketplace" element={<MarketplacePage />} />
+
+        <Route path="/products" element={
+          <ProtectedRoute allowedRoles={['CLIENT']}>
+            <ProductsPage />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/my-products" element={
+          <ProtectedRoute allowedRoles={['PROVIDER']}>
+            <MyProductsPage />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/product-orders" element={
+          <ProtectedRoute allowedRoles={['CLIENT', 'PROVIDER']}>
+            <ProductOrdersPage />
+          </ProtectedRoute>
+        } />
 
         {/* Dashboards */}
         <Route path="/user" element={

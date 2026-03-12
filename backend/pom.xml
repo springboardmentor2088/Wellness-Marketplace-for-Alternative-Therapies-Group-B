@@ -44,6 +44,13 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- H2 Database for Zero-Config Dev Setup -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
         <!-- Spring Boot Starter Security (for JWT/auth) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -111,6 +118,11 @@
 <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-aop</artifactId>
+</dependency>
+<dependency>
+    <groupId>com.sendgrid</groupId>
+    <artifactId>sendgrid-java</artifactId>
+    <version>4.10.2</version>
 </dependency>
 
     </dependencies>

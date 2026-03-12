@@ -278,7 +278,7 @@ CREATE TABLE `user_entity` (
 
 LOCK TABLES `user_entity` WRITE;
 /*!40000 ALTER TABLE `user_entity` DISABLE KEYS */;
-INSERT INTO `user_entity` VALUES (7,'Admin','admin123@gmail.com','$2a$10$Pj9kX0JfP2H4hG5v8yO3kOvL7H5bJgL8W1cQpG6n8fVtR9xH1yI5e','ADMIN','Bangalore','India',1,NULL);
+INSERT INTO `user_entity` VALUES (7,'Admin','***REMOVED***','$2a$10$Pj9kX0JfP2H4hG5v8yO3kOvL7H5bJgL8W1cQpG6n8fVtR9xH1yI5e','ADMIN','Bangalore','India',1,NULL);
 /*!40000 ALTER TABLE `user_entity` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -344,7 +344,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (31,'admin123@gmail.com','Admin','$2a$10$9WwC0tTn36KOVaZs2dmLcOIE2SYTXiec2cZq0W/RGXni1VsWrJ7Hu','ADMIN',NULL,NULL,NULL,NULL,NULL,1,1,NULL,NULL,NULL,NULL),(32,'arahanjain058@gmail.com','Valorant','$2a$10$uR.4W/8YxxZhAtsmTJYwdO/6CTX9dqX6CdZjPC3xNBagkdfp/IFCi','CLIENT','','Mandya','India',NULL,'APPROVED',0,1,NULL,NULL,NULL,NULL),(33,'valorantgaming058@gmail.com','Valorant Gaming','$2a$10$9YBzrfsH48pkCDrbYi1lzuOIcd8b0LOLeZSjl2qSE50WdZA9BB7sS','CLIENT','','Bangalore','India',NULL,'APPROVED',0,1,NULL,NULL,NULL,NULL),(34,'valoforlife058@gmail.com','Valo fo life','$2a$10$fwBTfq/S3OD9bpwGOMxC1uIc7kCmRBtu6HKP0XDz81D/pz3Tvou2q','PROVIDER','Ayurveda','Bangalore','India','uploads/degrees/34_degrees.pdf','APPROVED',1,1,NULL,NULL,NULL,NULL),(35,'codeforlife058@gmail.com','manav das','$2a$10$Ly/D6vBDC3ruaUUNMAwsq.hUJIwgSZ5AHp1ApVATwFNu3YCw9BAVa','PROVIDER','Ayurveda','Bangalore','India','uploads/degrees/35_degrees.pdf','APPROVED',1,1,NULL,NULL,NULL,NULL);
+INSERT INTO `users` VALUES (31,'***REMOVED***','Admin','$2a$10$9WwC0tTn36KOVaZs2dmLcOIE2SYTXiec2cZq0W/RGXni1VsWrJ7Hu','ADMIN',NULL,NULL,NULL,NULL,NULL,1,1,NULL,NULL,NULL,NULL),(32,'arahanjain058@gmail.com','Valorant','$2a$10$uR.4W/8YxxZhAtsmTJYwdO/6CTX9dqX6CdZjPC3xNBagkdfp/IFCi','CLIENT','','Mandya','India',NULL,'APPROVED',0,1,NULL,NULL,NULL,NULL),(33,'valorantgaming058@gmail.com','Valorant Gaming','$2a$10$9YBzrfsH48pkCDrbYi1lzuOIcd8b0LOLeZSjl2qSE50WdZA9BB7sS','CLIENT','','Bangalore','India',NULL,'APPROVED',0,1,NULL,NULL,NULL,NULL),(34,'valoforlife058@gmail.com','Valo fo life','$2a$10$fwBTfq/S3OD9bpwGOMxC1uIc7kCmRBtu6HKP0XDz81D/pz3Tvou2q','PROVIDER','Ayurveda','Bangalore','India','uploads/degrees/34_degrees.pdf','APPROVED',1,1,NULL,NULL,NULL,NULL),(35,'codeforlife058@gmail.com','manav das','$2a$10$Ly/D6vBDC3ruaUUNMAwsq.hUJIwgSZ5AHp1ApVATwFNu3YCw9BAVa','PROVIDER','Ayurveda','Bangalore','India','uploads/degrees/35_degrees.pdf','APPROVED',1,1,NULL,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

@@ -6,9 +6,7 @@ import {
   Star,
   Heart,
   Activity,
-  CheckCircle2,
   ChevronRight,
-  PlayCircle,
 } from "lucide-react";
 
 export function LandingPage() {

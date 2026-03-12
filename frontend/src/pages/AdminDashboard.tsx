@@ -17,7 +17,7 @@ interface PendingAction {
 
 function StatusBadge({ status }: { status?: string }) {
   const s = (status || 'PENDING').toUpperCase()
-  const map: Record<string, { label: string; cls: string; icon: JSX.Element }> = {
+  const map: Record<string, { label: string; cls: string; icon: React.ReactNode }> = {
     APPROVED: { label: 'Verified', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: <CheckCircle2 size={11} /> },
     REJECTED: { label: 'Rejected', cls: 'bg-rose-50 text-rose-700 border-rose-200', icon: <XCircle size={11} /> },
     PENDING_ADMIN_APPROVAL: { label: 'Pending Approval', cls: 'bg-amber-50 text-amber-700 border-amber-200', icon: <Activity size={11} /> },

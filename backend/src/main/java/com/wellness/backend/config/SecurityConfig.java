@@ -23,24 +23,26 @@ public class SecurityConfig {
     private final CustomUserDetailsService userDetailsService;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/degree/**").permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/provider/**").hasRole("PROVIDER")
-                        .requestMatchers("/api/client/**").hasRole("CLIENT")
-                        .anyRequest().authenticated())
-                .userDetailsService(userDetailsService)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+    http
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .csrf(csrf -> csrf.disable())
+        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/degree/**").permitAll()
+                .requestMatchers("/uploads/**").permitAll()   // ✅ ADD THIS LINE
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/provider/**").hasRole("PROVIDER")
+                .requestMatchers("/api/client/**").hasRole("CLIENT")
+                .anyRequest().authenticated()
+        )
+        .userDetailsService(userDetailsService)
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-        return http.build();
-    }
+    return http.build();
+}
 
     @Bean
     public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {

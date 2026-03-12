@@ -23,7 +23,7 @@ export interface Profile {
   id: number
   name: string
   email: string
-  password?: string // Added for profile updates
+  password?: string
   role: string
   city?: string
   country?: string
@@ -32,22 +32,151 @@ export interface Profile {
   degreeFile?: string
   verified?: boolean
   emailVerified: boolean
+  adminComment?: string
+  sessionFee?: number
+  profileImage?: string
+}
+
+export interface UserDTO {
+  id: number;
+  fullName: string;
+  specialization: string;
+  profileImage: string;
+  sessionFee?: number;
 }
 
 export interface Booking {
-  id?: number
+  id: number
+  userId: number
+  clientName?: string
+  clientEmail?: string
+  bookingDate: string
+  startTime?: string
+  endTime?: string
+  duration?: number
+  notes?: string
+  practitionerComment?: string
+  status: string
+  sessionFee?: number
+  practitioner?: UserDTO
+}
+
+export interface BookingRequest {
   userId: number
   practitionerId: number
   bookingDate?: string
-  status: 'PENDING' | 'CONFIRMED' | 'CANCELLED'
   notes?: string
+}
+
+export interface Product {
+  productId?: number
+  name: string
+  description: string
+  price: number
+  imageUrl?: string
+  providerId: number
+  createdAt?: string
+}
+
+export interface OrderRequest {
+  productId: number;
+  quantity: number;
+  totalPrice: number;
+}
+
+export interface Order {
+  orderId: number
+  productName: string
+  productImage: string
+  price: number
+  quantity: number
+  totalAmount: number
+  orderDate: string
+  deliveryDate: string
+  deliveryStatus: string
+  status: string
+}
+
+export interface PractitionerStats {
+  totalOrders: number;
+  totalProductsSold: number;
+  totalRevenue: number;
+  sessionRevenueMonthly?: number;
+  monthlyRevenue: Record<string, number>;
+}
+
+export interface SessionBooking {
+  id?: number
+  clientId: number
+  clientName?: string
+  clientEmail?: string
+  providerId: number
+  providerName?: string
+  providerSpecialization?: string
+  providerProfileImage?: string
+  sessionDate: string
+  startTime: string
+  endTime: string
+  duration: number
+  issueDescription: string
+  status: 'PENDING' | 'ACCEPTED' | 'RESCHEDULE_REQUESTED' | 'REJECTED' | 'COMPLETED'
+  providerMessage?: string
+  sessionFee?: number
+  reminderSent?: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface Notification {
+  id: number
+  type: 'BOOKING_REQUEST' | 'SESSION_CONFIRMED' | 'SESSION_REJECTED' | 'SESSION_RESCHEDULE_SUGGESTED' | 'SESSION_REMINDER' | 'SESSION_CANCELLED' | 'SESSION_COMPLETED' | 'SESSION_NOT_COMPLETED'
+  message: string
+  read: boolean
+  relatedBookingId?: number
+  createdAt: string
+}
+
+export interface PractitionerAnalytics {
+  dailyRevenue: number;
+  weeklyRevenue: number;
+  monthlyRevenue: number;
+  yearlyRevenue: number;
+  allTimeRevenue: number;
+
+  dailyGrowthPercent: number;
+  weeklyGrowthPercent: number;
+  monthlyGrowthPercent: number;
+  yearlyGrowthPercent: number;
+
+  sessionRevenueDaily: number;
+  productRevenueDaily: number;
+  sessionRevenueMonthly: number;
+  productRevenueMonthly: number;
+  sessionRevenueAllTime: number;
+  productRevenueAllTime: number;
+
+  totalSessionRevenue: number;
+  totalProductRevenue: number;
+  accumulatedRevenue: number;
+}
+
+export interface PatientAnalytics {
+  sessionsAttended: number;
+  totalSessionSpent: number;
+  totalProductSpent: number;
+  totalSpent: number;
+
+  monthlySpent: number;
+  yearlySpent: number;
+
+  recentSessions: Booking[];
+  recentOrders: Order[];
 }
 
 const apiClient = axios.create({ baseURL: API_BASE, withCredentials: true })
 
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // 🔥 Skip Authorization header for public auth endpoints
     const publicPaths = ['/auth/login', '/auth/register', '/auth/verify-otp', '/auth/resend-otp', '/auth/forgot-password']
     const isPublic = publicPaths.some(path => config.url?.endsWith(path))
 
@@ -65,7 +194,6 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // 🔥 Only redirect to login if we get a 401/403 on a NON-public endpoint
     const publicPaths = ['/auth/', '/degree/']
     const isPublic = publicPaths.some(path => error.config?.url?.includes(path))
 
@@ -128,7 +256,7 @@ export const api = {
   async rejectPractitioner(id: number) { await apiClient.put(`/admin/reject/${id}`) },
 
   // Bookings
-  async createBooking(data: Booking): Promise<Booking> {
+  async createBooking(data: BookingRequest): Promise<Booking> {
     const response = await apiClient.post('/bookings', data)
     return response.data
   },
@@ -138,14 +266,196 @@ export const api = {
     return response.data
   },
 
+  async getUserBookingHistory(userId: number): Promise<Booking[]> {
+    const response = await apiClient.get(`/bookings/user/${userId}/history`)
+    return response.data
+  },
+
   async getPractitionerBookings(practitionerId: number): Promise<Booking[]> {
     const response = await apiClient.get(`/bookings/practitioner/${practitionerId}`)
     return response.data
   },
 
-  async getAllPractitioners(): Promise<Profile[]> {
-    const response = await apiClient.get('/admin/users')
+  async getPractitionerBookingHistory(practitionerId: number): Promise<Booking[]> {
+    const response = await apiClient.get(`/bookings/practitioner/${practitionerId}/history`)
     return response.data
+  },
+
+  async acceptBooking(id: number): Promise<Booking> {
+    const response = await apiClient.put(`/bookings/${id}/accept`)
+    return response.data
+  },
+
+  async rejectBooking(id: number): Promise<Booking> {
+    const response = await apiClient.put(`/bookings/${id}/reject`)
+    return response.data
+  },
+
+  async notCompleteBooking(id: number): Promise<Booking> {
+    const response = await apiClient.put(`/bookings/${id}/not-complete`)
+    return response.data
+  },
+
+  async rescheduleBooking(id: number, data: { newSessionDate?: string, newStartTime?: string }): Promise<Booking> {
+    const response = await apiClient.put(`/bookings/${id}/reschedule`, data)
+    return response.data
+  },
+
+  async completeBooking(id: number): Promise<Booking> {
+    const response = await apiClient.put(`/bookings/${id}/complete`)
+    return response.data
+  },
+
+  async cancelBooking(id: number): Promise<Booking> {
+    const response = await apiClient.put(`/bookings/${id}/cancel`)
+    return response.data
+  },
+
+  async acceptRescheduleBooking(id: number): Promise<Booking> {
+    const response = await apiClient.put(`/bookings/${id}/accept-reschedule`)
+    return response.data
+  },
+
+  async getAllPractitioners(): Promise<Profile[]> {
+    const response = await apiClient.get('/user/all-practitioners')
+    return response.data
+  },
+
+  async getApprovedPractitioners(): Promise<Profile[]> {
+    const response = await apiClient.get('/user/practitioners')
+    return response.data
+  },
+
+  // Products
+  async getProducts(): Promise<Product[]> {
+    const response = await apiClient.get('/products')
+    return response.data
+  },
+
+  async getProviderProducts(providerId: number): Promise<Product[]> {
+    const response = await apiClient.get(`/products/provider/${providerId}`)
+    return response.data
+  },
+
+  async createProduct(data: FormData): Promise<Product> {
+    const response = await apiClient.post('/products', data, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    return response.data
+  },
+
+  async updateProduct(id: number, data: FormData): Promise<Product> {
+    const response = await apiClient.put(`/products/${id}`, data, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    return response.data
+  },
+
+  async deleteProduct(id: number, providerId: number) {
+    await apiClient.delete(`/products/${id}?providerId=${providerId}`)
+  },
+
+  // Orders
+  async createOrder(data: OrderRequest): Promise<Order> {
+    const response = await apiClient.post('/orders', data)
+    return response.data
+  },
+
+  async getUserOrders(userId: number): Promise<Order[]> {
+    const response = await apiClient.get(`/orders/user/${userId}`)
+    return response.data
+  },
+
+  async getProviderOrders(providerId: number): Promise<Order[]> {
+    const response = await apiClient.get(`/orders/provider/${providerId}`)
+    return response.data
+  },
+
+  async getPractitionerStats(providerId: number): Promise<PractitionerStats> {
+    const response = await apiClient.get(`/orders/practitioner/${providerId}/stats`)
+    return response.data
+  },
+
+  // Sessions (Smart Booking)
+  async bookSession(data: {
+    providerId: number
+    sessionDate: string
+    startTime: string
+    endTime: string
+    duration: number
+    issueDescription: string
+  }): Promise<SessionBooking> {
+    const response = await apiClient.post('/sessions/book', data)
+    return response.data
+  },
+
+  async getProviderSessions(providerId: number): Promise<SessionBooking[]> {
+    const response = await apiClient.get(`/sessions/provider/${providerId}`)
+    return response.data
+  },
+
+  async getProviderSessionsHistory(providerId: number): Promise<SessionBooking[]> {
+    const response = await apiClient.get(`/sessions/provider/${providerId}/history`)
+    return response.data
+  },
+
+  async getClientSessions(clientId: number): Promise<SessionBooking[]> {
+    const response = await apiClient.get(`/sessions/client/${clientId}`)
+    return response.data
+  },
+
+  async getClientSessionsHistory(clientId: number): Promise<SessionBooking[]> {
+    const response = await apiClient.get(`/sessions/client/${clientId}/history`)
+    return response.data
+  },
+
+  async acceptSession(id: number, providerMessage?: string): Promise<SessionBooking> {
+    const response = await apiClient.put(`/sessions/${id}/accept`, { providerMessage })
+    return response.data
+  },
+
+  async rescheduleSession(id: number, data: {
+    newSessionDate?: string
+    newStartTime?: string
+    newEndTime?: string
+    providerMessage: string
+  }): Promise<SessionBooking> {
+    const response = await apiClient.put(`/sessions/${id}/reschedule`, data)
+    return response.data
+  },
+
+  async rejectSession(id: number, providerMessage?: string): Promise<SessionBooking> {
+    const response = await apiClient.put(`/sessions/${id}/reject`, { providerMessage })
+    return response.data
+  },
+
+  async confirmReschedule(id: number): Promise<SessionBooking> {
+    const response = await apiClient.put(`/sessions/${id}/confirm-reschedule`)
+    return response.data
+  },
+
+  async getUpcomingSessionReminders(): Promise<SessionBooking[]> {
+    const response = await apiClient.get('/sessions/upcoming-reminders')
+    return response.data
+  },
+
+  async completeSession(id: number): Promise<SessionBooking> {
+    const response = await apiClient.put(`/sessions/${id}/complete`)
+    return response.data
+  },
+
+  async notCompleteSession(id: number): Promise<SessionBooking> {
+    const response = await apiClient.put(`/sessions/${id}/not-complete`)
+    return response.data
+  },
+
+  async getNotifications(): Promise<Notification[]> {
+    const response = await apiClient.get('/notifications')
+    return response.data
+  },
+
+  async markNotificationRead(id: number): Promise<void> {
+    await apiClient.put(`/notifications/${id}/read`)
   },
 
   async verifyEmail(token: string): Promise<{ message: string }> {
@@ -168,6 +478,17 @@ export const api = {
 
   async forgotPassword(email: string): Promise<{ message: string }> {
     const response = await apiClient.post('/auth/forgot-password', { email })
+    return response.data
+  },
+
+  // Analytics
+  async getPractitionerAnalytics(id: number): Promise<PractitionerAnalytics> {
+    const response = await apiClient.get(`/analytics/practitioner/${id}`)
+    return response.data
+  },
+
+  async getPatientAnalytics(id: number): Promise<PatientAnalytics> {
+    const response = await apiClient.get(`/analytics/patient/${id}`)
     return response.data
   }
 }

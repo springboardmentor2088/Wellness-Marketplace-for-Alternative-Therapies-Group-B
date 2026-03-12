@@ -45,10 +45,10 @@ public class AuthController {
     CommandLineRunner initializeData() {
         return args -> {
             // Seed/Reset Admin
-            Optional<UserEntity> userOpt = userRepository.findByEmail("admin123@gmail.com");
+            Optional<UserEntity> userOpt = userRepository.findByEmail("***REMOVED***");
             if (userOpt.isPresent()) {
                 UserEntity user = userOpt.get();
-                user.setPassword(passwordEncoder.encode("admin123@"));
+                user.setPassword(passwordEncoder.encode("***REMOVED***"));
                 user.setEmailVerified(true); // Ensure admin is always verified
                 userRepository.save(user);
                 System.out.println("✅ Admin initialized/reset successfully!");
